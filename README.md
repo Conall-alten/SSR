@@ -14,6 +14,8 @@ To ensure smooth collaboration, all code uploaded here must adhere to
     A.) No local path references such as r"C:\Desktop\folder\blabla.csv"
         Only paths which are in the repository are allowed: "local_copy_of_repository/folder_1/folder_2/blabla.csv"
     B.) No errors allowed on codes uploaded to the repo. (we should be able to open and run code without any basic debugging)
-    
+
+**3 Organisation**
+  Sensible folder organisation and descriptive file names
   
   
