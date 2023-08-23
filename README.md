@@ -16,9 +16,9 @@ To ensure smooth collaboration, all code uploaded here must adhere to
     B.) No basic errors allowed on codes uploaded to the repo. (we should be able to open and run code without having to add a parthesis or something simple) <br>
 
 **3 Organisation** <br>
-  Sensible folder organisation and descriptive file names <br>
-  All code should have a description of what it does in the following format: <br>
+  A.) Sensible folder organisation and descriptive file names <br>
+  B.) All code should have a description of what it does in the following format: <br>
     [INPUTS - PROCESS - OUTPUTS] <br>
-  All code should be commented.
+  C.) All code should be commented.
   
   
