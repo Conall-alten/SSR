@@ -1,0 +1,35 @@
+﻿Name,accuracy (deg),mass (kg),power (W)
+NXSS3v00,1,0.003,0.0072
+NanoSSOC-A60,0.5,0.004,0.0066
+SS Sun Sensor - Medium,1,0.005,0
+NXSS2v01,1,0.005,0.026
+NanoSSOC-D60,0.5,0.0065,0.0759
+GOS Sun Sensor,0.5,0.0097,0.0145
+"CSS-01, 02",5,0.01,0
+Sun Aspect Sensor,1,0.015,0.015
+Cosine Sun Sensor Redundant,3,0.015,0
+MAUS,0.5,0.016,
+BiSon64-ET,0.5,0.024,
+Cosine Sun Sensor,3,0.024,
+CubeSense S,0.2,0.03,
+BiSon64-ET-B,0.5,0.033,
+SSOC-D60,0.3,0.035,
+"MSS-01, 02",1,0.036,
+Digital Sun Sensor,0.5,0.04,
+Advanced Coarse Sun Sensor (ACSS),1,0.04,
+Sun Sensors,0.5,0.04,
+Solar Panel Sun Sensor,0.5,0.045,
+4 Pi Sun Sensor,5,0.05,
+Mini Fine Sun Sensor,0.2,0.05,
+SX-SSM-01,0.15,0.05,
+TY Sun Sensor,0.1,0.06,
+SS Sun Sensor - Array,1,0.077,
+CubeSense,0.2,0.08,
+FSSA-110,5,0.11,
+Coarse Sun Sensor Pyramid Type,1,0.13,
+Coarse Sun Sensor,1.5,0.215,
+Bi-Axial Sun Sensor,0.5,0.24,
+Miniature Spinning Sun Sensor,0.5,0.25,
+S3 Smart Sun Sensor,0.02,0.33,
+Fine Sun Sensor,0.3,0.365,
+Fine Spinning Sun Sensor,0.6,0.71,
