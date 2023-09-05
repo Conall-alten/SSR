@@ -2,17 +2,21 @@
 """
 Created on Tue Jun 20 16:36:52 2023
 
-@author: Quentin
+@author: Decline
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-k = np.pi / 180  # facteur de conversion degré/radian
+plt.close("all")
+
+# Paramètres initiaux
+
 res_NADIR = 0.825    # resolution au sol de la caméra (exemple 1 mètre = cahier
                      # des charges SSR)
-angle = np.linspace(0, 70, 20)
-#res_NADIR = 1.24 # 1.24m = résolution WorldView-3
+                     
+angle = [66.5] # Angle maximum souhaité
+
 R = 6378      # rayon de la Terre (km)
 
 g_ND = 0      # booléen utilisé pour l'affichage de la distance ND e fonction 
@@ -24,10 +28,7 @@ g_reso = 1    # booléen utilisé pour l'affichage de la résolution au sol en
 
 cc = -1 # compteur
 
-altitudes = [150, 180, 190, 196, 200, 250, 260, 300, 400, 500, 800] # test de 
-# plusieurs altitudes du satellite
-
-#altitudes = [160]     # altitude de WorldView-3 (697km) sinon altitude test
+altitudes = [100] # test d'une ou plusieurs altitudes du satellite
 
 for h in altitudes:
     res_list = []
@@ -35,13 +36,12 @@ for h in altitudes:
         
         cc += 1
     
-        d_theta = res_NADIR / h       # resolution angulaire au NADIR en radians
-        D_THETA = d_theta / k         # resolution angulaire au NADIR en degres
+        d_theta = res_NADIR/h # résolution angulaire au NADIR en radians
+        D_THETA = np.rad2deg(d_theta) # résolution angulaire au NADIR en degrés
         
-        theta = np.arange(1, 70, D_THETA) * k   # discrétisation du champ de vue 
-                                                # (theta) en radians
-        THETA = theta / k                       # discrétisation du champ de vue 
-                                                # (theta) en degres
+        theta = np.arange(1, 90, D_THETA) # discrétisation du champ de vue (théta) en radians
+        THETA = np.rad2deg(theta)         # discrétisation du champ de vue 
+                                          # (théta) en degrés
         
         OD_simple = h/np.cos(theta) # calcul approximatif de la distance OD (sans
                                     # prise en compte de la courbure de la Terre)
@@ -83,7 +83,10 @@ for h in altitudes:
             plt.plot(THETA, OD_simple, linestyle='dotted', color=clr)
     
         if g_reso:
-            plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(h))
+            if ang==angle[0]:
+                plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(h))
+            else:
+                plt.plot(THETA[:-1], res_THETA)
             plt.grid()
             plt.xlabel(r"Angle de $visée$ (deg)")
             plt.ylabel("distance (km)")
@@ -105,35 +108,4 @@ for h in altitudes:
               "degrés, à l'altitude",h)
         print("Moyenne de", (res_THETA[i-1]+res_THETA[i])/2,"m à",
               (THETA[i-1]+THETA[i])/2,"°")
-        
-
-
-# affichages
-# if g_OD:
-#     plt.grid()
-#     plt.axhline(500, linewidth=3, color="black", linestyle="dashed")
-#     plt.xlabel(r"Angle de $visée$ (deg)")
-#     plt.ylabel("distance (km)")
-#     plt.title(r"distance capteur-cible (km) en fonction de l'angle de $visée$
-     #(deg)")
-#     plt.legend()
-#     plt.show()
-
-# if g_ND:
-#     plt.grid()
-#     plt.xlabel(r"Angle de $visée$ (deg)")
-#     plt.ylabel("distance (km)")
-#     plt.title(r"distance SSP-cible (km) en fonction de l'angle de $visée$ 
-#(deg)")
-#     plt.legend()
-#     plt.show()
-
-# if g_reso:
-#     plt.plot(THETA, res_THETA_theorique, color="black")
-#     plt.xlabel(r"Angle de $visée$ (deg)")
-#     plt.ylabel("taille du pixel (m)")
-#     plt.title(r"résolution au sol (m) en fonction de l'angle de $visée$ 
-#(deg)")
-#     plt.grid()
-#     plt.legend()
-#     plt.show()
+    
