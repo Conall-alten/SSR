@@ -16,17 +16,16 @@ res_NADIR = 0.825 # Résolution au sol de la caméra (exemple 1 mètre = cahier
                   # des charges SSR)
 
 altitudes = [100, 180, 200, 220, 240, 250, 260, 300, 500, 800] # altitude
+altitudes = np.linspace(100, 500, 10)
 # Une couleur par altitude (plots)
-colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'gold', 'cyan'] 
+# colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'gold', 'cyan'] 
     
 # Résolution off-nadir désirée 
-res_sol1 = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]
-res_sol2 = [1.5, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-res_sol3 = [5.0, 6.0, 8.0, 10.0]
-res_sol_tot = [res_sol1, res_sol2, res_sol3]
-# res_sol1 = np.linspace(0.9, 1.6, 50)
-# res_sol2 = np.linspace(1.6, 5.0, 50)
 
+res_sol1 = np.linspace(0.9, 1.6, 6)
+res_sol2 = np.linspace(1.6, 5, 5)
+res_sol3 = np.linspace(5, 10, 3)
+res_sol_tot = [res_sol1, res_sol2, res_sol3]
 R = 6378         # Rayon de la Terre (km)
 
 g_ND = 0         # Booléen utilisé pour l'affichage de la distance ND en 
@@ -47,8 +46,9 @@ M = np.zeros((N, deg+1))
 
 def get_coeff(deg, res_sol_tot, altitudes, ang_list, h):
 
-    plt.plot(res_list, ang_list, label=str(altitudes[h])+"km", c=colors[h])
-    plt.title(r"Interpolations entre "+str(res_sol_tot[0][0])+" et "+str(res_sol_tot[-1][-1])+" m")
+    plt.plot(res_list, ang_list, label=str(round(altitudes[h],1))+"km")#, c=colors[h])
+    plt.title(r"Interpolations entre "+str(res_sol_tot[0][0])+" et "+str(
+        res_sol_tot[-1][-1])+" m")
     plt.xlabel(r"Résolution limite (m)")
     plt.ylabel(r"Angle de $visée$ (deg)")
     plt.grid()
@@ -110,38 +110,37 @@ for rt in range(len(res_sol_tot)):
             plt.figure(1)
             plt.plot(THETA, ND, label="altitude h={0} km".format(
                 altitudes[h]))
-            plt.plot(THETA, ND_simple, linestyle='dotted', c=colors[h])
+            plt.plot(THETA, ND_simple, linestyle='dotted')#, c=colors[h])
             plt.show()
             
         elif g_OD:
             plt.figure(1)
             plt.plot(THETA, OD, label=r"altitude h={0} km".format(
                 altitudes[h]))
-            plt.plot(THETA, OD_simple, linestyle='dotted', c=colors[h])
+            plt.plot(THETA, OD_simple, linestyle='dotted')#, c=colors[h])
             plt.show()
             
         elif g_reso:
             plt.figure(1)
             if rt==0:
                 plt.plot(THETA[:-1], res_THETA, 
-                      label="altitude h={0} km".format(altitudes[h]), 
-                      c=colors[h])
+                      label="altitude h={0:9.1f} km".format(altitudes[h]))#,c=colors[h])
                 plt.legend()
             else:
                 plt.plot(THETA[:-1], res_THETA, 
-                      label="altitude h={0} km".format(altitudes[h]), 
-                      c=colors[h])
+                      label="altitude h={0:9.1f} km".format(altitudes[h]))#c=colors[h])
             # plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
             #       label="Résolution théorique", c=colors[h])
             
-            plt.title("Résolution au sol (m) en fonction de l'angle de $visée$ (deg)")
+            plt.title(
+                "Résolution au sol (m) en fonction de l'angle de $visée$ (deg)")
             plt.xlabel("Angle de $visée$ (deg)")
             plt.ylabel("distance (km)")
             plt.grid()
             plt.show()
             
         # Toutes les résolutions par altitude
-    
+        
         for r in res_sol_tot[rt]:  
             res_list.append(r)
             e = 0.001
@@ -158,10 +157,10 @@ for rt in range(len(res_sol_tot)):
         else:
             mymodel, myline, M = get_coeff(deg, res_sol_tot, altitudes, 
                                             ang_list, h)
-        plt.plot(myline, mymodel(myline), linestyle=':', c=colors[h])
-    
-    plt.figure(rt+3)
-
+        plt.plot(myline, mymodel(myline), linestyle=':')#, c=colors[h])
+        
+    plt.figure(2*rt+3)
+    # print("Déterminant=",np.linalg.det(M))
     # Coefficient des polynômes pour chaque degré en fonction de l'altitude
     plt.plot(M, altitudes)
     plt.title(str(res_sol_tot[rt][0])+" m to "+str(res_sol_tot[rt][-1])+" m")
@@ -176,3 +175,21 @@ for rt in range(len(res_sol_tot)):
         plt.scatter(premier_elt_list, list_alt, label="x^"+str(i))
     plt.legend()
     plt.show()
+    
+    plt.figure(2*(rt+2)) # La prochaine figure après la liste des res
+    prop = [] # Coefficient de proportionalité k
+    for i in range(np.shape(M)[0]): # Pour toutes les lignes
+        l = []
+        for j in range(deg+1): # Pour toutes les colonnes
+            k=M[i][0]/M[i][j]  # On prend la constante de chaque polynôme (premier 
+                               # terme de chaque ligne) comme référence
+            l.append(k)
+        prop.append(l) # Liste des coefficients de proportionnalité
+    for i in range(len(prop)):
+        plt.plot([i for i in range(deg+1)], prop[i], label="h ="+str(
+            round(altitudes[i],1))+" km")
+        plt.title(str(res_sol_tot[rt][0])+" m to "+str(
+            res_sol_tot[rt][-1])+" m")
+        plt.xlabel('Puissance de x')
+        plt.ylabel('k = $C/x^n$')
+        plt.legend()
