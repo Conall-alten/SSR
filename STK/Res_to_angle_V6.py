@@ -17,6 +17,7 @@ res_NADIR = 0.825 # Résolution au sol de la caméra (exemple 1 mètre = cahier
 
 altitudes = [100, 180, 200, 220, 240, 250, 260, 300, 500, 800] # altitude
 altitudes = np.linspace(100, 500, 10)
+altitudes = [250]
 # Une couleur par altitude (plots)
 # colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'gold', 'cyan'] 
     
@@ -26,6 +27,10 @@ res_sol1 = np.linspace(0.9, 1.6, 6)
 res_sol2 = np.linspace(1.6, 5, 5)
 res_sol3 = np.linspace(5, 10, 3)
 res_sol_tot = [res_sol1, res_sol2, res_sol3]
+
+res_sol1 = [2]
+res_sol_tot = [res_sol1]
+
 R = 6378         # Rayon de la Terre (km)
 
 g_ND = 0         # Booléen utilisé pour l'affichage de la distance ND en 
@@ -184,7 +189,7 @@ for rt in range(len(res_sol_tot)):
             k=M[i][0]/M[i][j]  # On prend la constante de chaque polynôme (premier 
                                # terme de chaque ligne) comme référence
             l.append(k)
-        prop.append(l) # Liste des coefficients de proportionnalité
+        prop.append(l) # Liste des coefficients de proportionalité
     for i in range(len(prop)):
         plt.plot([i for i in range(deg+1)], prop[i], label="h ="+str(
             round(altitudes[i],1))+" km")

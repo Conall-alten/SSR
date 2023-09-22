@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 3 14:06:41 2023
+Created on Tue Sep  5 17:02:46 2023
 
 @author: DECLINE
 """
@@ -21,10 +21,8 @@ altitudes = [100, 180, 200, 220, 240, 250, 260, 300, 500, 800] # altitude
 colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'purple', 'cyan'] 
     
 # Résolution off-nadir désirée 
-res_sol1 = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]
-res_sol2 = [1.5, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-# res_sol1 = np.linspace(0.9, 1.6, 50)
-# res_sol2 = np.linspace(1.6, 5.0, 50)
+angle1 = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.5]
+angle2 = [1.6, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
 
 R = 6378         # Rayon de la Terre (km)
 
@@ -35,12 +33,12 @@ g_OD = 0         # Booléen utilisé pour l'affichage de la distance OD en
 g_reso = 1       # Booléen utilisé pour l'affichage de la résolution au sol en
                  # Fonction de l'angle
                  
-
+cr = -1          # Compteur
 mu = 398600      # Paramètre gravitationnel standard de la Terre
 v = np.sqrt(mu/(R+altitudes[0])) # Vitesse circulaire du satellite à l'altitude
                                  # altitudes[0]
-ch = -1 # Compteur altitudes
-cr = -1 # Compteur résolutions
+ch = -1
+
 deg = 4 # Degré des polynômes d'interpolation
 N = len(altitudes)
 M1 = np.zeros((N, deg+1))
@@ -66,34 +64,31 @@ def get_coeff(deg, res_sol, altitudes, ang_list, h):
     return mymodel, myline, M1
 
 # Pour toutes les altitudes
+
 for h in range(N):
     res_list = []
-    ang_list = []
     ch+=1
-    
-    # Toutes les résolutions par altitude
-    for r in res_sol1:
-        
-        res_list.append(r)
+    for ang in angle1:
+
         cr += 1
 
-        d_theta = res_NADIR/altitudes[h] # Résolution angulaire au nadir en 
+        d_theta = res_NADIR/altitudes[h] # résolution angulaire au nadir en 
                                          # radians
-        D_THETA = np.rad2deg(d_theta)    # Résolution angulaire au nadir en degrés
+        D_THETA = np.rad2deg(d_theta)    # résolution angulaire au nadir en degrés
         
-        theta = np.deg2rad(np.arange(1, 90, D_THETA)) # Discrétisation du champ
+        theta = np.deg2rad(np.arange(1, 90, D_THETA)) # discrétisation du champ
                                                     # de vue (theta) en radians
                                               
-        THETA = np.rad2deg(theta) # Discrétisation du champ de vue (theta) en 
+        THETA = np.rad2deg(theta) # discrétisation du champ de vue (theta) en 
                                   # degrés
         
-        OD_simple = altitudes[h]/np.cos(theta) # Calcul approximatif de la 
+        OD_simple = altitudes[h]/np.cos(theta) # calcul approximatif de la 
         # distance OD (sans prise en compte de la courbure de la Terre)
         
-        ND_simple = altitudes[h]*np.tan(theta) # Calcul approximatif de la 
+        ND_simple = altitudes[h]*np.tan(theta) # calcul approximatif de la 
         # distance ND (sans prise en compte de la courbure de la Terre)
     
-        # Coefficients du polynôme de degré 2 et calcul du déterminant delta
+        # coefficients du polynôme de degré 2 et calcul du déterminant delta
         a = 1+1/np.tan(theta)**2
         b = -2*(R+altitudes[h])/np.tan(theta)
         c = altitudes[h]*(altitudes[h]+2*R)
@@ -113,48 +108,51 @@ for h in range(N):
                                                             
         res_THETA_theorique = res_NADIR/np.cos(theta)**2  # équation qui ne
         # prend pas en compte la courbure de la Terre
-         
-        if g_ND:
-            plt.figure(1)
-            plt.plot(THETA, ND, label="altitude h={0} km".format(
-                altitudes[h]))
-            clr = plt.gca().get_children()[2*cr].get_color()
-            plt.plot(THETA, ND_simple, linestyle='dotted', color=clr)
-            plt.show()
+ 
+        
+        # if g_ND:
+        #     plt.figure(1)
+        #     plt.plot(THETA, ND, label="altitude h={0} km".format(
+        #         altitudes[h]))
+        #     clr = plt.gca().get_children()[2*cr].get_color()
+        #     plt.plot(THETA, ND_simple, linestyle='dotted', color=clr)
+        #     plt.show()
             
-        elif g_OD:
-            plt.figure(1)
-            plt.plot(THETA, OD, label=r"altitude h={0} km".format(
-                altitudes[h]))
-            clr = plt.gca().get_children()[2*cr].get_color()
-            plt.plot(THETA, OD_simple, linestyle='dotted', color=clr)
-            plt.show()
+        # elif g_OD:
+        #     plt.figure(1)
+        #     plt.plot(THETA, OD, label=r"altitude h={0} km".format(
+        #         altitudes[h]))
+        #     clr = plt.gca().get_children()[2*cr].get_color()
+        #     plt.plot(THETA, OD_simple, linestyle='dotted', color=clr)
+        #     plt.show()
             
-        elif g_reso:
-            plt.figure(1)
-            if r == res_sol1[0]:
-                plt.plot(THETA[:-1], res_THETA, 
-                          label="altitude h={0} km".format(altitudes[h]), c=colors[h])
-                plt.legend()
-                # plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
-                #       label="Résolution théorique", c=colors[h])
-            else:
-                plt.plot(THETA[:-1], res_THETA, c=colors[h])
-                # plt.plot(THETA[:-1], res_THETA_theorique[:-1], c=colors[h], linestyle=":")
-            plt.grid()
-            plt.xlabel("Angle de $visée$ (deg)")
-            plt.ylabel("distance (km)")
-            plt.title("Résolution au sol (m) en fonction de l'angle de $visée$ (deg)")
-            plt.show()
+        # elif g_reso:
+        #     plt.figure(1)
+        #     if r == res_sol1[0]:
+        #         plt.plot(THETA[:-1], res_THETA, 
+        #                  label="altitude h={0} km".format(altitudes[h]), c=colors[h])
+        #         # plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
+        #         #       label="Résolution théorique", c=colors[h])
+        #     else:
+        #         plt.plot(THETA[:-1], res_THETA)
+        #         # plt.plot(THETA[:-1], res_THETA_theorique[:-1])
+        #     plt.grid()
+        #     plt.xlabel("Angle de $visée$ (deg)")
+        #     plt.ylabel("distance (km)")
+        #     plt.title("distance capteur-cible (km) en fonction de l'angle de $visée$ (deg)")
+        #     plt.legend()
+        #     plt.show()
             
-        e = 0.001
+        e = 0.001    
         i = 0
-        while r-res_THETA[i]>e:
-            i = i+1
-        ang_list.append((THETA[i-1]+THETA[i])/2)
+        while ang - THETA[i] > e :
+            i = i + 1
+            #print("Résolutions :", res_THETA[i], "et angles de", THETA[i],
+            #"degrés")
+        res_list.append((res_THETA[i-1]+res_THETA[i])/2)
     
     plt.figure(2)
-    mymodel, myline, M1 = get_coeff(deg, res_sol1, altitudes, ang_list, h)
+    mymodel, myline, M1 = get_coeff(deg, angle1, altitudes, ang_list, h)
     
     plt.plot(myline, mymodel(myline), linestyle=':', c=colors[h])
     
@@ -190,45 +188,42 @@ power_list = []
 
 for h in range(len(altitudes)):
     res_list = []
-    ang_list = []
     ch+=1
-    for r in res_sol2:
-        
-        res_list.append(r)
+    for ang in angle2:
         cr += 1
 
-        d_theta = res_NADIR/altitudes[h] # Résolution angulaire au nadir en 
-                                         # radians
-        D_THETA = np.rad2deg(d_theta)    # Résolution angulaire au nadir en degrés
+        d_theta = res_NADIR/altitudes[h] # résolution angulaire au nadir en 
+                                          # radians
+        D_THETA = np.rad2deg(d_theta)    # résolution angulaire au nadir en degrés
         
-        theta = np.deg2rad(np.arange(1, 90, D_THETA)) # Discrétisation du champ de vue 
+        theta = np.deg2rad(np.arange(1, 90, D_THETA)) # discrétisation du champ de vue 
                                             # (theta) en radians
                                               
-        THETA = np.rad2deg(theta)           # Discrétisation du champ de vue
+        THETA = np.rad2deg(theta)           # discrétisation du champ de vue
                                             # (theta) en degrés
         
-        OD_simple = altitudes[h]/np.cos(theta) # Calcul approximatif de la 
+        OD_simple = altitudes[h]/np.cos(theta) # calcul approximatif de la 
         # distance OD (sans prise en compte de la courbure de la Terre)
         
-        ND_simple = altitudes[h]*np.tan(theta) # Calcul approximatif de la 
+        ND_simple = altitudes[h]*np.tan(theta) # calcul approximatif de la 
         # distance ND (sans prise en compte de la courbure de la Terre)
     
-        # Coefficients du polynôme de degré 2 et calcul du déterminant delta
+        # coefficients du polynôme de degré 2 et calcul du déterminant delta
         a = 1+1/np.tan(theta)**2
         b = -2*(R+altitudes[h])/np.tan(theta)
         c = altitudes[h]*(altitudes[h]+2*R)
         delta = b**2-4*a*c
 
-        xDp = (-b+np.sqrt(delta))/(2*a) # Racine du polynôme à rejeter
+        xDp = (-b+np.sqrt(delta))/(2*a) # racine du polynôme à rejeter
         xDm = (-b-np.sqrt(delta))/(2*a)
     
-        xD = xDm                 # Coordonnée x du point au sol D
-        yD = np.sqrt(R**2-xD**2) # Coordonnée y du point au sol D
+        xD = xDm                 # coordonnée x du point au sol D
+        yD = np.sqrt(R**2-xD**2) # coordonnée y du point au sol D
     
-        OD = np.sqrt(xD**2+(R+altitudes[h]-yD)**2) # Distance capteur - cible
-        ND = np.sqrt((R-yD)**2+xD**2)              # Distance nadir - cible
+        OD = np.sqrt(xD**2+(R+altitudes[h]-yD)**2) # distance capteur - cible
+        ND = np.sqrt((R-yD)**2+xD**2)              # distance nadir - cible
     
-        res_THETA = (np.diff(xD)**2+np.diff(yD)**2)**0.5  # Résolution au sol
+        res_THETA = (np.diff(xD)**2+np.diff(yD)**2)**0.5  # résolution au sol
                                                           # en mètres
                                                   
         res_THETA_theorique = res_NADIR/np.cos(theta)**2  # équation qui ne
@@ -254,25 +249,26 @@ for h in range(len(altitudes)):
             plt.figure(4)
             if r == res_sol2[0]:
                 plt.plot(THETA[:-1], res_THETA, 
-                          label="altitude h={0} km".format(altitudes[h]), c=colors[h])
-                plt.legend()
-                # plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
-                #       label="Résolution théorique", c=colors[h])
+                          label="altitude h={0} km".format(altitudes[h]))
             else:
-                plt.plot(THETA[:-1], res_THETA, c=colors[h])
-                # plt.plot(THETA[:-1], res_THETA_theorique[:-1], c=colors[h], linestyle=":")
+                plt.plot(THETA[:-1], res_THETA)
+            #plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
+                      #label="Résolution théorique")
             plt.grid()
-            plt.xlabel("Angle de $visée$ (deg)")
+            plt.xlabel(r"Angle de $visée$ (deg)")
             plt.ylabel("distance (km)")
-            plt.title("Résolution au sol (m) en fonction de l'angle de $visée$ (deg)")
+            plt.title(r"distance capteur-cible (km) en fonction de l'angle de $visée$ (deg)")
+            plt.legend()
             plt.show()
             
         e = 0.01
         i = 0
         while r-res_THETA[i]>e:
             i=i+1
+        #print(i, r, round(res_THETA[i],3))
         ang_list.append((THETA[i-1]+THETA[i])/2)
-    plt.figure(2)
+        print(ang_list[0], altitudes[h])
+    plt.figure(5)
     mymodel, myline, M2 = get_coeff(deg, res_sol2, altitudes, ang_list, h)
     plt.plot(myline, mymodel(myline), linestyle=':', c=colors[h])
 
