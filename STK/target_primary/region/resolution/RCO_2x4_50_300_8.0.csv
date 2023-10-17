@@ -1,0 +1,40 @@
+"Coverage Properties"
+"Custom Regions Coverage                                            "
+"Grid Altitude: 0.0000 (km)                                         "
+"Ground Altitude set from grid altitude reference (On ellipsoid)    "
+"Resolution: 0.1000 (deg)                                           "
+"Number of Points: 16                                               "
+"Assets required for a valid access: At Least 1                     "
+"Assigned Assets:                                                   "
+"Constellation/Sensor:    Active                                "
+"Satellite/Satellite011/Sensor/Sensor1:    Active           "
+"Satellite/Satellite012/Sensor/Sensor2:    Active           "
+"Satellite/Satellite021/Sensor/Sensor3:    Active           "
+"Satellite/Satellite022/Sensor/Sensor4:    Active           "
+"Satellite/Satellite031/Sensor/Sensor5:    Active           "
+"Satellite/Satellite032/Sensor/Sensor6:    Active           "
+"Satellite/Satellite041/Sensor/Sensor7:    Active           "
+"Satellite/Satellite042/Sensor/Sensor8:    Active           "
+"Access Interval: 1 Aug 2023 10:00:00.000 to 8 Aug 2023 10:00:00.000"
+"Regional Acceleration: Automatic                                   "
+"Light time delay: Ignored                                          "
+"Maximum Sampling Time Step: 360.000 secs                           "
+"Minimum Sampling Time Step: 0.010 secs                             "
+"Time Convergence: 5.000e-03 secs                                   "
+"Value Convergence: Relative 1.000e-08 - Absolute 1.000e-14         "
+
+"FOM Properties"
+"Average Revisit Time                            "
+"Minimum number of assets required: 1            "
+"Gaps at ends of analysis interval are considered"
+"Satisfaction is not enabled                     "
+"FOM value range check is not enabled.           "
+
+"Region Name","Num Accesses","Minimum (sec)","Maximum (sec)","Average (sec)"
+"Sevastopol_city",255,2177.047,2177.047,2177.047
+"Kherson_city",237,2340.166,2350.325,2345.245
+"RostovDon_city",233,2382.699,2414.115,2400.929
+"Zaporizhia_city",228,2438.774,2461.033,2452.558
+"Donetsk_city",226,2461.255,2483.915,2472.524
+"Luhansk_city",218,2556.965,2556.965,2556.965
+
