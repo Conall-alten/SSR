@@ -20,7 +20,7 @@ plt.close('all')
 #%% Variables et fonctions utiles
 
 # Cibles ponctuelles (lon, lat) en décimales
-Donetsk = [37.805, 48.00277]
+Donetsk = [37.805, 48.003]
 Kherson = [32.611, 46.634]
 Luhansk = [39.303, 48.567]
 RostovDon = [39.7, 47.24]
@@ -143,8 +143,8 @@ plan1 = 4 # Nombre de plans (~4 - ~12)
 inc1 = "50" # Inclinaison des orbites (47, 51..., couplées 48_50, 47_49_50, ou
                # 0 si SSO) ou latitude du point focal pour une constellation 
                # citrouille
-alt1 = 260 # Altitude (150 - 500 km)
-res1 = 2.0   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
+alt1 = 100 # Altitude (150 - 500 km)
+res1 = 0.85   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
              # RCO_2x4_50_260_1.5, RCO_2x4_50_260_1, RCO_2x4_50_260_2.5)). Il 
              # faut donc écrire 1.0, 2.0 ou 3.0 au lieu de 1, 2 et 3 pour avoir
              # 1.0 avant 1.5
@@ -154,6 +154,7 @@ add = "_Luhansk" # Informations supplémentaires (cibles ponctuelles ou origine
 add = "_KSZ"
 add = "_FromFrance"
 add = ""
+#add = "_ChainBaseObject"
 
 # Paramètres de la constellation 2
 
@@ -180,11 +181,11 @@ name = name1 + name2
 # csv a transité sur Teams
 
 # Type de cible considérée
-folder1 = "\\conflict_rostov"
+folder1 = "\\target_primary"
 #folder1 = "\\hemisphere"
-#folder1 = "\\points"
-#folder1 = "\\secondary"
-#folder1 = "\\shapes"
+#folder1 = "\\files_points"
+#folder1 = "\\target_secondary"
+#folder1 = "\\general_shapes"
 
 # Type de rapport à importer
 folder2 = "\\FoM_points"
@@ -199,6 +200,7 @@ folder3 = "\\resolution"
 #folder3 = "\\link"
 #folder3 = "\\duration"
 #folder3 = ""
+#folder3 = "IP_Spacing"
 
 #%% Type de rapport : Access AreaTarget to Satellite-Sensor or Chain
 
@@ -330,7 +332,7 @@ if folder2=="\\access_sensors":
     
     
 #%% Ici on s'intéresse aux rapports "Value By Grid Point", càd en tout point 
-# (lat, long)
+# de coordonnées (lat, long)
 
 elif folder2=="\\FoM_points": # Loi des RCO
     
@@ -338,12 +340,11 @@ elif folder2=="\\FoM_points": # Loi des RCO
     # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time (UTCG)")
     db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
                      folder2+folder3+name1+name2+".csv",skiprows=25+N,sep=",")
-    #db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                     #folder2+name+".csv",delimiter=";")
+    # Le nombre 25 correspond au nombre de ligne qu'il faut sauter pour ce type
+    # de rapport, lequel dépend du nombre de satellites
 
     #db_sorted = db.sort_values(by = ("Latitude (deg)"))
 
-    
     revisit_times = []
     lat = []
     long = []
@@ -383,61 +384,61 @@ elif folder2=="\\FoM_points": # Loi des RCO
     print(r2_score(minutes, mymodel(lat_reduite)))
 
 
-    # Affiche la revisite en fonction de la latitude, avec une interpolation.
+    # # Affiche la revisite en fonction de la latitude, avec une interpolation.
     
-    fig1 = plt.figure()
-    # Affiche la corrélation et l'équation
-    # plt.plot(myline, mymodel(myline))
-    # plt.text(12, 60, mymodel)
-    # plt.text(12, 55, '{:.5f}'.format(r2_score(minutes, mymodel(lat))))
-    plt.scatter(lat_reduite, revisit_times_moy, s=10)  
-    plt.minorticks_on()
-    plt.grid(True, which="major", color="k", linestyle="-")
-    plt.grid(True, which="minor", color="grey", linestyle="-", 
-             alpha=0.2)
+    # fig1 = plt.figure()
+    # # Affiche la corrélation et l'équation
+    # # plt.plot(myline, mymodel(myline))
+    # # plt.text(12, 60, mymodel)
+    # # plt.text(12, 55, '{:.5f}'.format(r2_score(minutes, mymodel(lat))))
+    # plt.scatter(lat_reduite, revisit_times_moy, s=10)  
+    # plt.minorticks_on()
+    # plt.grid(True, which="major", color="k", linestyle="-")
+    # plt.grid(True, which="minor", color="grey", linestyle="-", 
+    #          alpha=0.2)
     
-    # Corrélation et équation polynomiale
-    # plt.title("Revisit time, 1 week, avg = "+minsec(avg)+" s\n"+str(mymodel)+", R = "+str(
-    #         "{:.5f}".format(r2_score(minutes, mymodel(lat)))))
+    # # Corrélation et équation polynomiale
+    # # plt.title("Revisit time, 1 week, avg = "+minsec(avg)+" s\n"+str(mymodel)+", R = "+str(
+    # #         "{:.5f}".format(r2_score(minutes, mymodel(lat)))))
     
-    plt.title(orbit1.replace('\\', '')+" "+str(sat1)+"x"+str(plan1)+", avg = "+minsec(avg))
-    plt.xlabel("Latitude (deg)")
-    plt.ylabel("Revisit time (min)")
-    fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                 folder2+folder3+name1+name2+".png", dpi=300, pad_inches=0)
+    # plt.title(name1.replace('\\', '')+", avg = "+minsec(avg))
+    # plt.xlabel("Latitude (deg)")
+    # plt.ylabel("Revisit time (min)")
+    # fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+    #              folder2+folder3+name1+name2+".png", dpi=300, pad_inches=0)
    
     
-    # Affiche la zone cible et les latitudes remarquables.
+    # # Affiche la zone cible et les latitudes remarquables.
     
-    fig2 = plt.figure()
-    plt.title("Best = "+minsec(minutes[ind_min])+", worst = " 
-              +minsec(minutes[ind_max])+", avg = "+ minsec(avg))
+    # fig2 = plt.figure()
+    # plt.title("Best = "+minsec(minutes[ind_min])+", worst = " 
+    #           +minsec(minutes[ind_max])+", avg = "+ minsec(avg))
     
-    plt.minorticks_on()   
-    plt.scatter(long, lat, s=10)
+    # plt.minorticks_on()   
+    # plt.scatter(long, lat, s=10)
     
-    # Affiche les villes
-    # plt.scatter(Donetsk[0], Donetsk[1], c='k', s=50)
-    # plt.scatter(Kherson[0], Kherson[1], c='k', s=50)
-    # plt.scatter(Luhansk[0], Luhansk[1], c='k', s=50)
-    # plt.scatter(Zaporizhzhia[0], Zaporizhzhia[1], c = 'k', s = 50)
-    # plt.scatter(Sevastopol[0], Sevastopol[1], c = 'k', s = 50)
+    # # Affiche les villes
+    # # plt.scatter(Donetsk[0], Donetsk[1], c='k', s=50)
+    # # plt.scatter(Kherson[0], Kherson[1], c='k', s=50)
+    # # plt.scatter(Luhansk[0], Luhansk[1], c='k', s=50)
+    # # plt.scatter(Zaporizhzhia[0], Zaporizhzhia[1], c = 'k', s = 50)
+    # # plt.scatter(Sevastopol[0], Sevastopol[1], c = 'k', s = 50)
     
-    # Affiche les latitudes de l'inclinaison orbitale, de la pire et de la 
-    # meilleure revisite.
-    plt.axhline(y=int(inc1), c='k', label='inclination', linewidth=4, linestyle="--")
-    plt.axhline(y=lat[ind_max], c='r', label='maximum', linewidth=4)
-    plt.axhline(y=lat[ind_min], c='g', label='minimum', linewidth=4)
+    # # Affiche les latitudes de l'inclinaison orbitale, de la pire et de la 
+    # # meilleure revisite.
+    # plt.axhline(y=int(inc1), c='k', label='inclination', linewidth=4, linestyle="--")
+    # plt.axhline(y=lat[ind_max], c='r', label='maximum', linewidth=4)
+    # plt.axhline(y=lat[ind_min], c='g', label='minimum', linewidth=4)
     
-    plt.grid(True, which="major", color="k", linestyle="-")
-    plt.grid(True, which="minor", color="grey", linestyle="-",
-             alpha = 0.2)
-    plt.xlabel("Longitude (deg)")
-    plt.ylabel("Latitude (deg)")
-    plt.legend()
-    fig2.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                 folder2+"\map"+name1+name2+"_map.png", dpi=300,
-                 pad_inches=0)
+    # plt.grid(True, which="major", color="k", linestyle="-")
+    # plt.grid(True, which="minor", color="grey", linestyle="-",
+    #          alpha = 0.2)
+    # plt.xlabel("Longitude (deg)")
+    # plt.ylabel("Latitude (deg)")
+    # plt.legend()
+    # fig2.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+    #              folder2+"\map"+name1+name2+"_map.png", dpi=300,
+    #              pad_inches=0)
     
 
     # Règle des RCO
@@ -479,30 +480,28 @@ elif folder2=="\\FoM_points": # Loi des RCO
     res = [res1, res2]
     #res = [1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
     color = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink'] # Une couleur par altitude
-    fig3 = plt.figure()
     c = -1
+    fig3 = plt.figure()
     for a in alt: # Pour chaque altitude
         c+=1
-        
         for r1 in res: # Pour chaque segment de la liste des résolutions
             res_list = []
             diff_lat_min = []
             diff_lat_max = []
             for r2 in r1: # Pour chaque résolution dans le segment
-                
+                plt.close('all')
                 res_list.append(r2)
                 
                 name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+inc1+"_"+str(a)+"_"+str(r2)
                 print(name1)
-                N = sat1*plan1
+                N = sat1*plan1 # Nombre total de satellites permettant de sauter
+                # certaines lignes du rapport
                 # Le délimiteur peut être , ou ; (changer si KeyError)
                 db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+
                                   folder1+folder2+folder3+name1+name2+".csv", 
                                   skiprows=25+N, delimiter=",") # 25 correspond au
-                # format du rapport STK
-                
-                #db_sorted = db.sort_values(by = ("Latitude (deg)"))
-        
+                # format du rapport STK, dépendant du nombre total de satellites
+                #db_sorted = db.sort_values(by = ("Latitude (deg)")) # Si besoin
                 
                 revisit_times = np.zeros(len(db))
                 lat = np.zeros(len(db))
@@ -514,7 +513,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
                         revisit_times[i] = db.iloc[i, 2]
                     except:
                         break
-                    
+                
                 avg, minutes, new_revisit_times = moy_non_null(revisit_times)
                 
                 #print(minsec(avg))
@@ -534,7 +533,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
                 print(inc1)
                 print(lat[ind_max])
                 print(abs(int(inc1)-lat[ind_max]))
-                
+
             # Interpolation des courbes lat vs res
             mymodel = np.poly1d(np.polyfit(res_list, diff_lat_min, deg))
             myline = np.linspace(res_list[0], res_list[-1], 100)
@@ -573,6 +572,17 @@ elif folder2=="\\FoM_points": # Loi des RCO
     fig4=plt.figure()
     # Coefficient des polynômes pour chaque degré en fonction de l'altitude
     plt.plot(M, alt) 
+    fig4.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"
+                  +folder1+folder2+"\coefficients"+name1+name2+"_coeff.png", 
+                  dpi=300, pad_inches=0)
+    # mymodel = np.poly1d(np.polyfit(lat_reduite, minutes, 5))
+    # myline = np.linspace(lat[0], lat[-1], 100)
+    # print(r2_score(minutes, mymodel(lat_reduite)))
+
+
+    ############################################################################
+    
+    add = np.arange(0,plan1)
 
 #%% Ici on s'intéresse aux reports "Stats By Region"
 
@@ -637,6 +647,79 @@ elif folder2=="\\region":
 
 elif folder2 == "\\access_ground":
     
+    # Traitement du fichier csv
+    
+    # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams 
+    # (changer si KeyError: "Start Time (UTCG)")
+    # db est un DataFrame (sorte de tableau)
+    db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1
+                     +folder2+folder3+name+".csv",delimiter=",")
+    #db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1
+    #                 +folder2+folder3+name+".csv",delimiter=";")
+    
+    # Les accès sont donnés pour chaque satellite, il faut donc les classer 
+    # de façon chronologique indépendamment du satellite
+    # Le fichier est trié selon la colonne Start Time
+    db_sorted = db.sort_values(by = ("Start Time (UTCG)"))
+    
+    # Création d'une nouvelle colonne permettant d'indexer correctement les
+    # nouvelles lignes classées (les anciens indices sont dans le désordre)
+    index = np.arange(0, len(db_sorted))
+    db_sorted.insert(0, "index", index)
+    
+    # Les temps de revisite seront stockés dans cette liste
+    revisit_times = np.zeros(len(db_sorted))
+
+    for i in range(0, len(db_sorted)-1):
+        
+            
+            # Le temps de revisite correspond à la période entre la sortie de 
+            # la zone et l'entrée suivante. On soustrait donc les dates 
+            # d'entrée aux dates de sorties.
+            # La première valeur de Start et la dernière de Stop sont 
+            # inutilisables, d'où len(db_sorted)-1
+            # db_sorted.iloc[i+1, 2] = valeur du (i+1)ème élément de la 2e 
+            # colonne du tableau
+        if len(db_sorted.iloc[0, 1])>1:
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 1]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 2]).timestamp()
+            except:
+                 
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
+        else: # Un fichier Chain contient une colonne de plus contenant des 
+              # indices, il faut donc augmenter les indices de 1. On
+              # différencie un rapport chain d'un rapport access "manuel" en 
+              # comptant la longueur de la 2e colonne (si 1, on a un indice,
+              # sinon on a une date du type 1 Aug 2023 10:15:31.325)
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 3]).timestamp()
+            except:
+                
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
+    # Moyenne
+    avg, minutes, new_revisit_times = moy_non_null(revisit_times)
+    
+    # Durée de chaque revisite et moyenne
+    fig1 = plt.figure()
+    plt.minorticks_on()    
+    plt.grid(True, which="major", color="k", linestyle="-")
+    plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
+    plt.title("Revisit time, 1 week, avg = "+minsec(avg))
+    plt.xlabel("Number of revisits")
+    plt.ylabel("Revisit time (min)")
+    plt.scatter(np.linspace(0, len(new_revisit_times), len(new_revisit_times)),
+                minutes, s=10)
+    fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+                 folder2+folder3+name+".png", dpi=300, bbox_inches='tight')
+        
     #%% Link budget
     
     antenna_type = "dish"
@@ -672,7 +755,7 @@ elif folder2 == "\\access_ground":
             C_No = []
             BW = []
             C_N = []
-            Eb_No = []
+            Eb_No = [] # Must be >1e-12???
             BER = [] # Bit error rate
             data = [Time, EIRP, RF, RIP, FD, g_T, C_No, BW, C_N, Eb_No, BER]
             

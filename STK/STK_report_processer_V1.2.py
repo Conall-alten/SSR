@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul  5 15:47:44 2023
+Created on Sun Oct  8 01:50:18 2023
 
 @author: DECLINE
 """
@@ -17,8 +17,10 @@ from sklearn.metrics import r2_score
 # Ferme toutes les fenêtres
 plt.close('all')
 
+#%% Variables et fonctions utiles
+
 # Cibles ponctuelles (lon, lat) en décimales
-Donetsk = [37.805, 48.00277]
+Donetsk = [37.805, 48.003]
 Kherson = [32.611, 46.634]
 Luhansk = [39.303, 48.567]
 RostovDon = [39.7, 47.24]
@@ -33,8 +35,22 @@ targets = [Donetsk,
            Sevastopol, 
            Zaporizhzhia]
 
-
+# Indice du maximum d'une liste
 def indice_max(liste):
+    """
+    
+
+    Parameters
+    ----------
+    liste : liste de réels
+
+    Returns
+    -------
+    ind_max : entier
+        ind_max est l'indice du maximum de la liste'
+
+    """
+    
     maxi = liste[0]
     for i in range(len(liste)):
         if liste[i]>=maxi:
@@ -42,6 +58,7 @@ def indice_max(liste):
             ind_max=i
     return ind_max
 
+# Indice du minimum d'une liste
 def indice_min(liste):
     mini = liste[0]
     for i in range(len(liste)):
@@ -52,7 +69,7 @@ def indice_min(liste):
 
 # Calcule la moyenne des éléments non nuls d'une liste
 def moy_non_null(liste):
-    new_revisit_times = []
+    new_revisit_times = [] # Secondes
     minutes = []
     n = 0
     for m in liste:
@@ -69,22 +86,89 @@ def moy_non_null(liste):
     
     return avg, minutes, new_revisit_times
 
+# Convertit 24.768 en '24 min 46 s'
+def minsec(minutes):
+    return str(int(minutes))+" min "+str(int(round(60*(minutes-int(minutes)), 0)))+" s"
+    
+# Donne les coefficients des polynômes d'interpolation des courbes lat vs res
+# pour chaque altitude, et les range dans une matrice (ligne N = altitude N)
+def get_coeff(deg, res_sol_tot, altitudes, ang_list, h):
+
+    plt.plot(res_list, ang_list, label=str(altitudes[h])+"km")#, c=colors[h])
+    plt.title(r"Interpolations entre "+str(res_sol_tot[0][0])+" et "+str(res_sol_tot[-1][-1])+" m")
+    plt.xlabel(r"Résolution limite (m)")
+    plt.ylabel(r"Angle de $visée$ (deg)")
+    plt.grid()
+    plt.show()
+    
+    mymodel = np.poly1d(np.polyfit(res_list, ang_list, deg))
+    myline = np.linspace(res_list[0], res_list[-1], 100)
+
+    for i in range(deg+1): # 4 degrés plus la constante
+        M[h][i]=mymodel[i] # Matrice des coefficients polynomiaux par altitude
+                           # Constante, puis x, puis x²...
+
+    return mymodel, myline, M
+
+
+def doublons_moyenne(liste1, liste2):
+    # liste1 : liste de nombres avec des doublons
+    # liste2 : liste correspondante de même taille
+    
+    # Créez deux listes résultantes
+    liste1_reduite = [] # Liste réduite sans doublons
+    liste2_moy = [] # Liste contenant les "moyennes des doublons"
+
+    # Listes auxiliaires pour stocker les sommes et les occurrences
+    sommes = [0]*len(liste1)
+    occurrences = [0]*len(liste1)
+
+    for i in range(len(liste1)):
+        n1 = liste1[i]
+        n2 = liste2[i]
+
+        # Si le nombre n'est pas déjà dans la liste_reduite, on l'y met
+        if n1 not in liste1_reduite:
+            liste1_reduite.append(n1)
+        
+        # Indice de ce nombre dans la liste_reduite
+        index = liste1_reduite.index(n1)
+
+        # Mettez à jour la somme et l'occurrence
+        sommes[index]+=n2
+        occurrences[index]+=1
+
+    # Calculez les moyennes en utilisant les sommes et les occurrences
+    for i in range(len(liste1_reduite)):
+        moy = sommes[i]/occurrences[i]
+        liste2_moy.append(moy)
+        
+    return liste1_reduite, liste2_moy    
+    
+#%% Paramétrage
+
 # Paramètres de la constellation 1
 
-orbit1 = "\RCO" # Type d'orbite (RCO, SSO)
-#orbit = "\SSO"
+orbit1 = "\RCO" # Type d'orbite (RCO, SSO, CITROUILLE)
+#orbit1 = "\CITROUILLE"
+#orbit1 = "\SSO"
 sat1 = 2 # Nombre de satellites par plan (~2)
 plan1 = 4 # Nombre de plans (~4 - ~12)
-inc1 = "50" # Inclinaison des orbites (47 - 51, couplées 48_50, 47_49_50, ou
-               # 90 si SSO)
-alt1 = 260 # Altitude (150 - 500 km)
-res1 = 3.0 # Résolution au nadir (1 - ~5 m) (1.0 et non 1 pour que les 
-             # fichiers apparaissent dans l'ordre alphabétique (ex : 
+inc1 = "50" # Inclinaison des orbites (47, 51..., couplées 48_50, 47_49_50, ou
+               # 0 si SSO) ou latitude du point focal pour une constellation 
+               # citrouille
+alt1 = 100 # Altitude (150 - 500 km)
+res1 = 0.85   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
              # RCO_2x4_50_260_1.5, RCO_2x4_50_260_1, RCO_2x4_50_260_2.5)). Il 
-             # faut donc écrire 1.0, 2.0 ou 3.0 au lieu de 1, 2 et 3.
+             # faut donc écrire 1.0, 2.0 ou 3.0 au lieu de 1, 2 et 3 pour avoir
+             # 1.0 avant 1.5
 
-add = "_Luhansk" # Informations supplémentaires (cibles ponctuelles notamment)
+add = "_Luhansk" # Informations supplémentaires (cibles ponctuelles ou origine
+                 # des satellites notamment)
+add = "_KSZ"
+add = "_FromFrance"
 add = ""
+#add = "_ChainBaseObject"
 
 # Paramètres de la constellation 2
 
@@ -111,11 +195,11 @@ name = name1 + name2
 # csv a transité sur Teams
 
 # Type de cible considérée
-folder1 = "\\conflict_rostov"
+folder1 = "\\target_primary"
 #folder1 = "\\hemisphere"
-#folder1 = "\\points"
-#folder1 = "\\secondary"
-#folder1 = "\\shapes"
+#folder1 = "\\files_points"
+#folder1 = "\\target_secondary"
+#folder1 = "\\general_shapes"
 
 # Type de rapport à importer
 folder2 = "\\FoM_points"
@@ -130,11 +214,12 @@ folder3 = "\\resolution"
 #folder3 = "\\link"
 #folder3 = "\\duration"
 #folder3 = ""
+#folder3 = "IP_Spacing"
 
-#%% Type de rapport : Access AreaTarget to Satellite-Sensor
+#%% Type de rapport : Access AreaTarget to Satellite-Sensor or Chain
 
 if folder2=="\\access_sensors":
-    
+        
     # Traitement du fichier csv
     
     # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams 
@@ -159,7 +244,7 @@ if folder2=="\\access_sensors":
     revisit_times = np.zeros(len(db_sorted))
 
     for i in range(0, len(db_sorted)-1):
-        try:
+        
             
             # Le temps de revisite correspond à la période entre la sortie de 
             # la zone et l'entrée suivante. On soustrait donc les dates 
@@ -168,38 +253,39 @@ if folder2=="\\access_sensors":
             # inutilisables, d'où len(db_sorted)-1
             # db_sorted.iloc[i+1, 2] = valeur du (i+1)ème élément de la 2e 
             # colonne du tableau
-            revisit_times[i] = pd.to_datetime(
-                db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
-                    db_sorted.iloc[i, 3]).timestamp()
-            
-        except:
-            
-            # Le break est essentiel car à la fin du tableau, la fonction 
-            # to_datetime n'a plus de sens
-            break
-
+        if len(db_sorted.iloc[0, 1])>1:
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 1]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 2]).timestamp()
+            except:
+                 
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
+        else: # Un fichier Chain contient une colonne de plus contenant des 
+              # indices, il faut donc augmenter les indices de 1. On
+              # différencie un rapport chain d'un rapport access "manuel" en 
+              # comptant la longueur de la 2e colonne (si 1, on a un indice,
+              # sinon on a une date du type 1 Aug 2023 10:15:31.325)
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 3]).timestamp()
+            except:
+                
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
     # Moyenne
-    new_revisit_times = []
-    minutes = []
-    m = 0
-    for i in revisit_times:
-        m += i
-        if i!=0: # Si un temps de revisite est nul, cela veut dire que la zone
-                 # sélectionnée est trop grande et donc que le satellite ne
-                 # la couvre pas entièrement. Ces zones aveugles font baisser
-                 # la moyenne de revisite sur la zone souhaitée.
-            new_revisit_times.append(i)
-            minutes.append(i/60) # Minutes sont plus lisibles que les secondes
-    avg = m/(len(revisit_times)*60) # Moyenne de revisite sur la période donnée
-    #print(str(int(avg))+" min "+str(round(60*(avg-int(avg)), 0))+" s")
-
+    avg, minutes, new_revisit_times = moy_non_null(revisit_times)
+    
     # Durée de chaque revisite et moyenne
     fig1 = plt.figure()
     plt.minorticks_on()    
     plt.grid(True, which="major", color="k", linestyle="-")
     plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
-    plt.title("Revisit time, 1 week, avg = "+str(int(avg))+" min "+str(
-        round(60*(avg-int(avg)), 0))+" s")
+    plt.title("Revisit time, 1 week, avg = "+minsec(avg))
     plt.xlabel("Number of revisits")
     plt.ylabel("Revisit time (min)")
     plt.scatter(np.linspace(0, len(new_revisit_times), len(new_revisit_times)),
@@ -225,9 +311,9 @@ if folder2=="\\access_sensors":
         # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time 
         # (UTCG)" par exemple)
         db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+
-                         folder1+folder2+folder3+name1+".csv", delimiter = ",")
+                          folder1+folder2+folder3+name1+".csv", delimiter = ",")
         #db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+
-                         #folder1+folder2+name+".csv", delimiter=";")
+                          #folder1+folder2+name+".csv", delimiter=";")
         
         db_sorted = db.sort_values(by=("Start Time (UTCG)"))
         index = np.arange(0, len(db_sorted))
@@ -243,7 +329,7 @@ if folder2=="\\access_sensors":
                 break
         avg, minutes, new_revisit_times = moy_non_null(revisit_times)
        
-        print(str(int(avg))+" min "+str(round(60*(avg-int(avg)), 0))+" s")
+        print(minsec(avg))
         print(r)
         res_list.append(r)
         avg_list.append(avg)
@@ -260,103 +346,56 @@ if folder2=="\\access_sensors":
     
     
 #%% Ici on s'intéresse aux rapports "Value By Grid Point", càd en tout point 
-# (lat, long)
+# de coordonnées (lat, long)
 
 elif folder2=="\\FoM_points": # Loi des RCO
     
-    N = sat1*plan1+sat2*plan2
-    # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time (UTCG)")
-    db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                     folder2+folder3+name1+name2+".csv",skiprows=25+N,sep=",")
-    #db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                     #folder2+name+".csv",delimiter=";")
+    # N = sat1*plan1+sat2*plan2
+    # # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time (UTCG)")
+    # db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+    #                  folder2+folder3+name1+name2+".csv",skiprows=25+N,sep=",")
+    # # Le nombre 25 correspond au nombre de ligne qu'il faut sauter pour ce type
+    # # de rapport, lequel dépend du nombre de satellites
 
-    #db_sorted = db.sort_values(by = ("Latitude (deg)"))
+    # #db_sorted = db.sort_values(by = ("Latitude (deg)"))
 
-    
-    revisit_times = np.zeros(len(db))
-    lat = []
-    long = []
-    for i in range(0, len(db)):
-        try:
-            if db.iloc[i, 2]<20000: # Les très grandes valeurs correspondent
-                                    # à une revisite inexistante (typiquement
-                                    # au niveau du pôle Nord).
+    # revisit_times = []
+    # lat = []
+    # long = []
+    # for i in range(0, len(db)):
+    #     try:
+    #         if db.iloc[i, 2]<20000: # Les très grandes valeurs correspondent
+    #                                 # à une revisite inexistante (typiquement
+    #                                 # au niveau du pôle Nord). Celle-ci font
+    #                                 # chuter la moyenne sur les régions utiles
                 
-                lat.append(db.iloc[i, 0])        # 1e colonne : latitude
-                long.append(db.iloc[i, 1])       # 2e colonne : longitude
-                revisit_times[i] = db.iloc[i, 2] # 3e colonne : revisite
-                
-        except:
-            break
-        
-    # Moyenne
-
-    avg, minutes, new_revisit_times = moy_non_null(revisit_times)
-    ind_max = indice_max(new_revisit_times)
-    ind_min = indice_min(new_revisit_times)
-
-    mymodel = np.poly1d(np.polyfit(lat, minutes, 5))
-    myline = np.linspace(lat[0], lat[-1], 100)
-    print(r2_score(minutes, mymodel(lat)))
-    ############################## travaux
-
-
-    # Affiche la revisite en fonction de la latitude, avec une interpolation.
+    #             lat.append(db.iloc[i, 0])      # 1e colonne : latitude
+    #             long.append(db.iloc[i, 1])     # 2e colonne : longitude
+    #             revisit_times.append(db.iloc[i, 2]) # 3e colonne : revisite
+    #     except:
+    #         break
     
-    fig1 = plt.figure()
-    #plt.plot(myline, mymodel(myline))
-    plt.scatter(lat, minutes, s=10)  
-    #plt.text(12, 60, mymodel)
-    #plt.text(12, 55, '{:.5f}'.format(r2_score(minutes, mymodel(lat))))
-    plt.minorticks_on()
-    plt.grid(True, which="major", color="k", linestyle="-")
-    plt.grid(True, which="minor", color="grey", linestyle="-", 
-             alpha=0.2)
-    #plt.title("Revisit time, 1 week, avg = "+str(int(avg))+" min "+str(
-    #    round(60*(avg-int(avg)), 0))+" s\n"+str(mymodel)+", R = "+str(
-    #        "{:.5f}".format(r2_score(minutes, mymodel(lat)))))
-    plt.title("Revisit time, 1 week, avg = "+str(int(avg))+" min "+str(
-        round(60*(avg-int(avg)), 0))+" s")
-    plt.xlabel("Latitude (deg)")
-    plt.ylabel("Revisit time (min)")
-    fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                 folder2+folder3+name1+name2+".png", dpi=300, pad_inches=0)
-   
+    # # La simulation STK ne peut pas se faire sur une durée trop longue
+    # # (typiquement plus de 2 semaines) pour des raisons de temps de calcul.
+    # # Ainsi, il existe une variation des valeurs pour chaque latitude parce
+    # # que les satellites n'ont pas tourné assez longtemps autour de la Terre.
+    # # On retrouve donc plusieurs valeurs pour chaque latitude, et le nombre de
+    # # valeurs différentes dépend des latitudes. Il est donc impossible 
+    # # d'obtenir une moyenne de revisite exacte en faisant la moyenne de toutes
+    # # les valeurs dont on dispose puisque certaines correspondent à la même
+    # # latitude.
     
-    # Affiche la zone cible et les latitudes remarquables.
+    # lat_reduite, revisit_times_moy_reduite = doublons_moyenne(lat, revisit_times)
     
-    fig2 = plt.figure()
-    plt.title("Map, avg = "+str(int(avg))+" min "+str(
-        round(60*(avg-int(avg)), 0))+" s")
+    # # Moyenne
+    # avg, minutes, new_revisit_times = moy_non_null(revisit_times_moy_reduite)
     
-    plt.minorticks_on()   
-    plt.scatter(long, lat, s=30)
-    
-    # Affiche les villes
-    plt.scatter(Donetsk[0], Donetsk[1], c='k', s=100)
-    plt.scatter(Kherson[0], Kherson[1], c='k', s=100)
-    plt.scatter(Luhansk[0], Luhansk[1], c='k', s=100)
-    plt.scatter(Zaporizhzhia[0], Zaporizhzhia[1], c = 'k', s = 100)
-    plt.scatter(Sevastopol[0], Sevastopol[1], c = 'k', s = 100)
-    
-    # Affiche les latitudes de l'inclinaison orbitale, de la pire et de la 
-    # meilleure revisite.
-    plt.axhline(y=50, c='k', label='inclination')
-    plt.axhline(y=lat[ind_max], c='r', label='maximum')
-    plt.axhline(y=lat[ind_min], c='g', label='minimum')
-    
-    plt.grid(True, which="major", color="k", linestyle="-")
-    plt.grid(True, which="minor", color="grey", linestyle="-",
-             alpha = 0.2)
-    plt.xlabel("Longitude (deg)")
-    plt.ylabel("Latitude (deg)")
-    plt.legend()
-    fig2.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
-                 folder2+"\map"+name1+name2+"_map.png", dpi=300,
-                 pad_inches=0)
-    
-  
+    # ind_max = indice_max(new_revisit_times)
+    # ind_min = indice_min(new_revisit_times)
+    # #mymodel, myline, M = get_coeff(deg, lat, altitudes, minutes, h)
+    # mymodel = np.poly1d(np.polyfit(lat_reduite, minutes, 5))
+    # myline = np.linspace(lat[0], lat[-1], 100)
+    # print(r2_score(minutes, mymodel(lat_reduite)))
 
     # Règle des RCO
     
@@ -381,10 +420,10 @@ elif folder2=="\\FoM_points": # Loi des RCO
     # pour alt = 100, 180, 260, 300, 500 et 800.
     # Sauvegarder les profils rev=f(lat).
     
-    alt = [100, 180, 260, 300,400,  500]
+    alt = [100, 180, 260, 300, 400, 500, 800]
     deg = 4
-    N = len(alt)
-    M = np.zeros((N, deg+1))
+    l = len(alt)
+    M = np.zeros((l, deg+1))
     #alt = [100]
     # Résolution au nadir (compose le nom de fichiers existants)
     #res = [0.85, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
@@ -392,83 +431,146 @@ elif folder2=="\\FoM_points": # Loi des RCO
     # La liste de toutes les résolutions est scindée pour que numpy puisse
     # correctement interpoler chaque morceau de la courbe totale.
     
-    res1 = [0.85, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0]
-    res2 = [5.0, 6.0, 8.0, 10.0]
+    res1 = [0.85, 1.0, 1.5, 2.0, 2.5, 3.0]
+    res2 = [3.0, 3.5, 4.0, 5.0, 6.0, 8.0, 10.0]
     res = [res1, res2]
     #res = [1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
-    color = ['b', 'r', 'g', 'k', 'orange', 'm'] # Une couleur par altitude
-    fig3 = plt.figure()
+    color = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink'] # Une couleur par altitude
     c = -1
+    fig3 = plt.figure()
     for a in alt: # Pour chaque altitude
         c+=1
-        
         for r1 in res: # Pour chaque segment de la liste des résolutions
             res_list = []
             diff_lat_min = []
             diff_lat_max = []
             for r2 in r1: # Pour chaque résolution dans le segment
-                
+                plt.close('all')
                 res_list.append(r2)
                 
                 name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+inc1+"_"+str(a)+"_"+str(r2)
                 print(name1)
-                N = sat1*plan1
+                N = sat1*plan1 # Nombre total de satellites permettant de sauter
+                # certaines lignes du rapport
                 # Le délimiteur peut être , ou ; (changer si KeyError)
                 db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+
-                                 folder1+folder2+folder3+name1+name2+".csv", 
-                                 skiprows=25+N, delimiter=",") # 25 correspond au
-                # format du rapport STK
-                
-                #db_sorted = db.sort_values(by = ("Latitude (deg)"))
-        
-                
+                                  folder1+folder2+folder3+name1+name2+".csv", 
+                                  skiprows=25+N, delimiter=",") # 25 correspond au
+
                 revisit_times = np.zeros(len(db))
                 lat = np.zeros(len(db))
                 long = np.zeros(len(db))
                 for i in range(0, len(db)):
                     try:
-                        revisit_times[i] = db.iloc[i, 2]
-                        lat[i] = db.iloc[i, 0]
-                        long[i] = db.iloc[i, 1]
+                        if db.iloc[i, 2]<200000: # Les très grandes valeurs correspondent
+                                                # à une revisite inexistante (typiquement
+                                                # au niveau du pôle Nord). Celles-ci font
+                                                # chuter la moyenne sur les régions utiles
+                            
+                            lat[i]=(db.iloc[i, 0])      # 1e colonne : latitude
+                            long[i]=(db.iloc[i, 1])     # 2e colonne : longitude
+                            revisit_times[i]=(db.iloc[i, 2]) # 3e colonne : revisite
                     except:
+                        print("noooooooo")
                         break
                     
-                avg, minutes, new_revisit_times = moy_non_null(revisit_times)
+                lat_reduite, revisit_times_moy_reduite = doublons_moyenne(lat, revisit_times)
                 
-                #print(str(int(avg))+" min "+str(round(60*(avg-int(avg)), 0))+" s")
+                # Moyenne
+                avg, minutes, new_revisit_times = moy_non_null(revisit_times_moy_reduite)
                 
-                # On trouve les indices du max et du min
                 ind_max = indice_max(new_revisit_times)
                 ind_min = indice_min(new_revisit_times)
-                        
+                
+                #print(minsec(avg))
+                
                 # Position du maximum et du minimum de revisite
-                # Ces latitudes - l'inclinaison donne une différence en degrés
-                # Cette différence doit être connue avec précision afin de lancer
-                # une constellation sur une cible avec le plus de précision.
+                
+                # Une différence de degrés existe entre ces latitudes et 
+                # l'inclinaison. Cette différence doit être connue avec
+                # précision afin de lancer une constellation sur une cible
+                # avec la plus grande précision.
                 
                 diff_lat_min.append(abs(int(inc1)-lat[ind_min]))
                 diff_lat_max.append(abs(int(inc1)-lat[ind_max]))
                 print(inc1)
                 print(lat[ind_max])
                 print(abs(int(inc1)-lat[ind_max]))
+                ################################################ COPIER-COLLER
+                # Affiche la revisite en fonction de la latitude, avec une interpolation.
                 
-                # Interpolation des courbes lat vs res
-                mymodel = np.poly1d(np.polyfit(res_list, diff_lat_min, deg))
-                myline = np.linspace(res_list[0], res_list[-1], 100)
-                for m in range(deg+1): # 4 degrés plus la constante
-    
-                    print(mymodel[m], "cc2 =", c, ", m =", m)
-                    M[c][m]=mymodel[m]
-                    print("r2",r2_score(diff_lat_min, mymodel(res_list)))
-                plt.plot(myline, mymodel(myline), linestyle=':')
+                fig1 = plt.figure()
+                # Affiche la corrélation et l'équation
+                # plt.plot(myline, mymodel(myline))
+                # plt.text(12, 60, mymodel)
+                # plt.text(12, 55, '{:.5f}'.format(r2_score(minutes, mymodel(lat))))
+                revisit_times_moy_reduite_sec = []
+                for i in revisit_times_moy_reduite:
+                    revisit_times_moy_reduite_sec.append(i/60)
+                plt.scatter(lat_reduite, revisit_times_moy_reduite_sec, s=10)  
+                plt.minorticks_on()
+                plt.grid(True, which="major", color="k", linestyle="-")
+                plt.grid(True, which="minor", color="grey", linestyle="-", 
+                         alpha=0.2)
+                
+                # Corrélation et équation polynomiale
+                # plt.title("Revisit time, 1 week, avg = "+minsec(avg)+" s\n"+str(mymodel)+", R = "+str(
+                #         "{:.5f}".format(r2_score(minutes, mymodel(lat)))))
+                
+                plt.title(name1.replace('\\', '')+", avg = "+minsec(avg))
+                plt.xlabel("Latitude (deg)")
+                plt.ylabel("Revisit time (min)")
+                fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+                             folder2+folder3+name1+name2+".png", dpi=300, pad_inches=0)
+               
+                
+                # Affiche la zone cible et les latitudes remarquables.
+                
+                fig2 = plt.figure()
+                plt.title("Best = "+minsec(minutes[ind_min])+", worst = " 
+                          +minsec(minutes[ind_max])+", avg = "+ minsec(avg))
+                
+                plt.minorticks_on()   
+                plt.scatter(long, lat, s=10)
+                
+                # Affiche les villes
+                # plt.scatter(Donetsk[0], Donetsk[1], c='k', s=50)
+                # plt.scatter(Kherson[0], Kherson[1], c='k', s=50)
+                # plt.scatter(Luhansk[0], Luhansk[1], c='k', s=50)
+                # plt.scatter(Zaporizhzhia[0], Zaporizhzhia[1], c = 'k', s = 50)
+                # plt.scatter(Sevastopol[0], Sevastopol[1], c = 'k', s = 50)
+                
+                # Affiche les latitudes de l'inclinaison orbitale, de la pire et de la 
+                # meilleure revisite.
+                plt.axhline(y=int(inc1), c='k', label='inclination', linewidth=4, linestyle="--")
+                plt.axhline(y=lat[ind_max], c='r', label='maximum', linewidth=4)
+                plt.axhline(y=lat[ind_min], c='g', label='minimum', linewidth=4)
+                
+                plt.grid(True, which="major", color="k", linestyle="-")
+                plt.grid(True, which="minor", color="grey", linestyle="-",
+                         alpha = 0.2)
+                plt.xlabel("Longitude (deg)")
+                plt.ylabel("Latitude (deg)")
+                plt.legend()
+                fig2.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+                             folder2+"\map"+name1+name2+"_map.png", dpi=300,
+                             pad_inches=0)
+            # Interpolation des courbes lat vs res
+            mymodel = np.poly1d(np.polyfit(res_list, diff_lat_min, deg))
+            myline = np.linspace(res_list[0], res_list[-1], 100)
+            for m in range(deg+1): # 4 degrés plus la constante
+
+                print(mymodel[m], "cc2 =", c, ", m =", m)
+                M[c][m]=mymodel[m]
+                print("r2",r2_score(diff_lat_min, mymodel(res_list)))
+                plt.plot(myline, mymodel(myline), linestyle=':', c=color[c])
                 
             # Changer le nom des fichiers cible (la liste res) et l'altitude    
             # De plus, il faut que len(color) = len(altitudes)
             
             if r1==res[0]:
-                
                 plt.plot(res_list, diff_lat_min, marker="o", 
-                         label="Inc - best at "+str(a)+"km", c=color[c]) 
+                          label="Inc - best at "+str(a)+"km", c=color[c]) 
             else:
                 plt.plot(res_list, diff_lat_min, marker="o", c=color[c]) 
             
@@ -485,13 +587,26 @@ elif folder2=="\\FoM_points": # Loi des RCO
     plt.grid(True, which="major", color="k", linestyle="-")
     plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
     fig3.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"
-                 +folder1+folder2+"\loi\\"+str(inc1)+"_loi.png", 
-                 dpi=300, pad_inches=0)
+                  +folder1+folder2+"\loi\\"+str(inc1)+"_loi.png", 
+                  dpi=300, pad_inches=0)
     
     fig4=plt.figure()
     # Coefficient des polynômes pour chaque degré en fonction de l'altitude
     plt.plot(M, alt) 
+    fig4.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"
+                  +folder1+folder2+"\coefficients"+name1+name2+"_coeff.png", 
+                  dpi=300, pad_inches=0)
     
+    # soucis de taille à régler
+    # mymodel = np.poly1d(np.polyfit(lat_reduite, minutes, 5))
+    # myline = np.linspace(lat[0], lat[-1], 100)
+    # print(r2_score(minutes, mymodel(lat_reduite)))
+
+
+    ############################################################################
+    
+    add = np.arange(0,plan1)
+
 #%% Ici on s'intéresse aux reports "Stats By Region"
 
 elif folder2=="\\region":
@@ -534,8 +649,7 @@ elif folder2=="\\region":
         avg, minutes, new_revisit_times = moy_non_null(revisit_times)
         fig1 = plt.figure()
         plt.minorticks_on()
-        plt.title("Revisit time, avg = "+str(int(avg))+" min "+str(round(
-            60*(avg-int(avg)), 0))+" s")
+        plt.title("Revisit time, avg = "+minsec(avg))
         plt.xlabel("Longitude (deg)")
         plt.ylabel("Latitude (deg)")
         
@@ -556,6 +670,79 @@ elif folder2=="\\region":
 
 elif folder2 == "\\access_ground":
     
+    # Traitement du fichier csv
+    
+    # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams 
+    # (changer si KeyError: "Start Time (UTCG)")
+    # db est un DataFrame (sorte de tableau)
+    db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1
+                     +folder2+folder3+name+".csv",delimiter=",")
+    #db = pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1
+    #                 +folder2+folder3+name+".csv",delimiter=";")
+    
+    # Les accès sont donnés pour chaque satellite, il faut donc les classer 
+    # de façon chronologique indépendamment du satellite
+    # Le fichier est trié selon la colonne Start Time
+    db_sorted = db.sort_values(by = ("Start Time (UTCG)"))
+    
+    # Création d'une nouvelle colonne permettant d'indexer correctement les
+    # nouvelles lignes classées (les anciens indices sont dans le désordre)
+    index = np.arange(0, len(db_sorted))
+    db_sorted.insert(0, "index", index)
+    
+    # Les temps de revisite seront stockés dans cette liste
+    revisit_times = np.zeros(len(db_sorted))
+
+    for i in range(0, len(db_sorted)-1):
+        
+            
+            # Le temps de revisite correspond à la période entre la sortie de 
+            # la zone et l'entrée suivante. On soustrait donc les dates 
+            # d'entrée aux dates de sorties.
+            # La première valeur de Start et la dernière de Stop sont 
+            # inutilisables, d'où len(db_sorted)-1
+            # db_sorted.iloc[i+1, 2] = valeur du (i+1)ème élément de la 2e 
+            # colonne du tableau
+        if len(db_sorted.iloc[0, 1])>1:
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 1]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 2]).timestamp()
+            except:
+                 
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
+        else: # Un fichier Chain contient une colonne de plus contenant des 
+              # indices, il faut donc augmenter les indices de 1. On
+              # différencie un rapport chain d'un rapport access "manuel" en 
+              # comptant la longueur de la 2e colonne (si 1, on a un indice,
+              # sinon on a une date du type 1 Aug 2023 10:15:31.325)
+            try:
+                revisit_times[i] = pd.to_datetime(
+                    db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
+                        db_sorted.iloc[i, 3]).timestamp()
+            except:
+                
+                # Le break est essentiel car à la fin du tableau, la fonction 
+                # to_datetime n'a plus de sens
+                break
+    # Moyenne
+    avg, minutes, new_revisit_times = moy_non_null(revisit_times)
+    
+    # Durée de chaque revisite et moyenne
+    fig1 = plt.figure()
+    plt.minorticks_on()    
+    plt.grid(True, which="major", color="k", linestyle="-")
+    plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
+    plt.title("Revisit time, 1 week, avg = "+minsec(avg))
+    plt.xlabel("Number of revisits")
+    plt.ylabel("Revisit time (min)")
+    plt.scatter(np.linspace(0, len(new_revisit_times), len(new_revisit_times)),
+                minutes, s=10)
+    fig1.savefig(r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+
+                 folder2+folder3+name+".png", dpi=300, bbox_inches='tight')
+        
     #%% Link budget
     
     antenna_type = "dish"
@@ -591,7 +778,7 @@ elif folder2 == "\\access_ground":
             C_No = []
             BW = []
             C_N = []
-            Eb_No = []
+            Eb_No = [] # Must be >1e-12???
             BER = [] # Bit error rate
             data = [Time, EIRP, RF, RIP, FD, g_T, C_No, BW, C_N, Eb_No, BER]
             
@@ -651,7 +838,7 @@ elif folder2 == "\\access_ground":
                     a += i
                 avg = a/(len(duration)*60) # moyenne de revisite sur la 
                 # période donnée
-                print(str(int(avg))+" min "+str(round(60*(avg-int(avg)), 0))+" s")
+                print(minsec(avg))
                 
             fig1 = plt.figure()
             plt.plot(index, minutes, marker = "o")

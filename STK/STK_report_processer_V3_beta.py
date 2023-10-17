@@ -32,30 +32,29 @@ targets = [Donetsk,
 N = 1 # Nombre de constellations (entre 1 et 2)
 
 #%%
-#E: orbit : List of Strings : Type of Orbit (RCO or SSO)
-#   inc : List of Integers : Inclination of the orbits
-#   alt : List of Integers : Altitude of the orbits
-#   res : List of Integers : Worst resolution off-nadir
-#   Nplan : List of Integers : Number of plan per constellation
-#   Nsat : List of Integers : Number of satellites per plan
-#   add : List of Strings : Additional argument
+# E: orbit : List of Strings : Type of Orbit (RCO or SSO)
+# inc : List of Integers : Inclination of the orbits
+# alt : List of Integers : Altitude of the orbits
+# res : List of Integers : Worst resolution off-nadir
+# Nplan : List of Integers : Number of plan per constellation
+# Nsat : List of Integers : Number of satellites per plan
+# add : List of Strings : Additional argument
 
 
-def nom(orbit, inc, alt, res, Nplan, Nsat, add):
+# def nom(orbit, inc, alt, res, Nplan, Nsat, add):
     
-    if len(orbit)==1:
-        
-        if add[0] == None:
-            name = "\\"+orbit[0]+"_"+str(Nsat[0])+"x"+str(Nplan[0])+"_"+str(inc[0])+"_"+str(alt[0])+"_"+str(res[0])
-        else:
-            name = "\\"+orbit[0]+"_"+str(Nsat[0])+"x"+str(Nplan[0])+"_"+str(inc[0])+"_"+str(alt[0])+"_"+str(res[0])+"_"+add[0]
+#     if len(orbit)==1:
+#         if add[0] == None:
+#             name = "\\"+orbit[0]+"_"+str(Nsat[0])+"x"+str(Nplan[0])+"_"+str(inc[0])+"_"+str(alt[0])+"_"+str(res[0])
+#         else:
+#             name = "\\"+orbit[0]+"_"+str(Nsat[0])+"x"+str(Nplan[0])+"_"+str(inc[0])+"_"+str(alt[0])+"_"+str(res[0])+"_"+add[0]
   
-    return name, inc, alt, res
+#     return name, inc, alt, res
 
 
-def param(N):
+def param(N, orbit_val, Nsat_val, Nplan_val, inc_val, alt_val, res_val, add_val):
+    
     if N==1:
-        
         orbit = []
         Nsat = np.zeros((N,1))
         Nplan = np.zeros((N,1))
@@ -65,69 +64,70 @@ def param(N):
         add = np.zeros((N,1))
         
         for i in range(N):
+            orbit.append(orbit_val)
+            Nsat[i] = Nsat_val
+            Nplan[i] = Nplan_val
+            inc[i] = inc_val
+            alt[i] = alt_val
+            res[i] = res_val
+            if add_val!=None:
+                add[i] = add_val
             
-            orbit.append("RCO")
-            Nsat[i] = 2
-            Nplan[i] = 4
-            inc[i] = 50
-            alt[i] = 260
-            res[i] = 1.6
-            add[i] = None
+        # name = nom(orbit, inc, alt, res, Nplan, Nsat, add)
+        name = "\\"+orbit[0]+"_"+str(Nsat[0])+"x"+str(Nplan[0])+"_"+str(inc[0])+"_"+str(alt[0])+"_"+str(res[0])+"_"+add[0]
+        
+    # elif N==2:
+        
+    #     orbit = np.zeros((N,1))
+    #     Nsat = np.zeros((N,1))
+    #     Nplan = np.zeros((N,1))
+    #     inc = np.zeros((N,1))
+    #     alt = np.zeros((N,1))
+    #     res = np.zeros((N,1))
+    #     add = np.zeros((N,1))
+        
+    #     orbit1 = "RCO"
+    #     Nsat1 = 2
+    #     Nplan1 = 4
+    #     inc1 = 50
+    #     alt1 = 260
+    #     res1 = 1.6
+    #     add1 = None
+        
+    #     orbit2 = "RCO"
+    #     Nsat2 = 2
+    #     Nplan2 = 4
+    #     inc2 = 50
+    #     alt2 = 260
+    #     res2 = 1.6
+    #     add2 = "Luhansk"
+        
+    #     r = [res1, res2]
+    #     a = [alt1, alt2]
+    #     p = [Nplan1, Nplan2]
+    #     i = [inc1, inc2]
+    #     d = [add1, add2]
+    #     o = [orbit1, orbit2]
+    #     s = [Nsat1, Nsat2]
+        
+    #     for j in range(N):
             
-        name = nom(orbit, inc, alt, res, Nplan, Nsat, add)
+    #         orbit[j] = o[j]
+    #         Nsat[j] = s[j]
+    #         Nplan[j] = p[j]
+    #         inc[j] = i[j]
+    #         alt[j] = a[j]
+    #         res[j] = r[j]
+    #         add[j] = d[j]
+            
+    #     name_const1 = nom(orbit1, inc1, alt1, res1, Nplan1, Nsat1, add1)
+    #     name_const2 = nom(orbit2, inc2, alt2, res2, Nplan2, Nsat2, add2)
+    #     name_const = const1+const2
     
-    elif N==2:
-        
-        orbit = np.zeros((N,1))
-        Nsat = np.zeros((N,1))
-        Nplan = np.zeros((N,1))
-        inc = np.zeros((N,1))
-        alt = np.zeros((N,1))
-        res = np.zeros((N,1))
-        add = np.zeros((N,1))
-        
-        orbit1 = "RCO"
-        Nsat1 = 2
-        Nplan1 = 4
-        inc1 = 50
-        alt1 = 260
-        res1 = 1.6
-        add1 = None
-        
-        orbit2 = "RCO"
-        Nsat2 = 2
-        Nplan2 = 4
-        inc2 = 50
-        alt2 = 260
-        res2 = 1.6
-        add2 = "Luhansk"
-        
-        r = [res1, res2]
-        a = [alt1, alt2]
-        p = [Nplan1, Nplan2]
-        i = [inc1, inc2]
-        d = [add1, add2]
-        o = [orbit1, orbit2]
-        s = [Nsat1, Nsat2]
-        
-        for j in range(N):
-            
-            orbit[j] = o[j]
-            Nsat[j] = s[j]
-            Nplan[j] = p[j]
-            inc[j] = i[j]
-            alt[j] = a[j]
-            res[j] = r[j]
-            add[j] = d[j]
-            
-        const1 = nom(orbit1, inc1, alt1, res1, Nplan1, Nsat1, add1)
-        const2 = nom(orbit2, inc2, alt2, res2, Nplan2, Nsat2, add2)
-        const = const1+const2
-    
-    return const, inc, alt, res
+    return name, orbit, Nsat, Nplan, inc, alt, res, add
 
 
-const, inc, alt, res = param(1)
+name, orbit, Nsat, Nplan, inc, alt, res, add = param(1, "RCO", 2, 4, 50, 260, 1.6, None)
 
 #C:\Users\DECLINE\Desktop\logiciels\python\stk\conflict_rostov\FoM_points\resolution
 
@@ -135,13 +135,16 @@ def lecture():
     folder1 = "\\conflict_rostov"
     folder2 = "\\FoM_points"
     folder3 = "\\resolution"
-    path = r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+folder2+folder3+nom(N)+".csv"
+    path = r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+folder2+folder3+name+".csv"
     try:
         db = pd.read_csv(path, delimiter=",")
     except:
         db = pd.read_csv(path, delimiter=";")
     return db, path
         
+
+lecture()
+
 # # Type de cible considérée
 folder1 = "\\conflict_rostov"
 #folder1 = "\\hemisphere"
