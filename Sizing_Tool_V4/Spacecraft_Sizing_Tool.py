@@ -263,7 +263,7 @@ def p_propulsion(alt, lifetime):
     drag = 0.5*rho*V**2*S*Cd
     thrust_req = drag
     p_req = thrust_req*ms+c
-    
+#    print(thrust_req)
     return np.round(p_req, 3)
 
 #%%
@@ -397,12 +397,12 @@ def m_AOCS(alt, res, total_mass, fauche):
     T_req = I*(req_ang_acc/180)*np.pi
     p_req = 125.63*T_req + 1.0205 #from Reaction Wheels.xlsx
     m_RW = p_req*0.1868 #from Reaction Wheels.xlsx
-
+    
     
     Sensors_mass = m_ST + m_SS + m_Gyro + m_RW
     return np.round(Sensors_mass, 3)
 #%%
-m_AOCS(250000,1,18,6000)
+m_AOCS(250000,1,23.18,6000)
 
 #%% Structure
 def m_str(total_mass):
