@@ -1,141 +1,96 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct  2 10:25:57 2023
+
+@author: cpelleray2
+"""
+
 import numpy as np
-print("-----------------------------------------")
-print("Partie 0 du code : Le choix des hypothèses, des spécificités et définition de labase de donnée")
-print("-----------------------------------------")
-print(" ")
+import pandas as pd
 
-hypothese_poids = 1 # 1=prit en compte ou 0 = inactif
-hypothese_conso = 1 # 1 ou 0
-hypothese_cout = 0 # 1 ou 0
+def normalisation(a):
+    a_max = np.nanmax(a)
+    a_min = np.nanmin(a)
+    a_norm = a.copy()
+    for x in range(len(a)):
+        a_norm[x] = (a[x]-a_min)/(a_max-a_min)
+    return a_norm
 
+def CHOIX_MOTEUR(hy1,hy2,hy3,req_O,req_POUSSEE,req_ISP):
+    MOTEUR = pd.read_excel("MOTEUR.xlsx")
 
-req_origine = "europe" #europe / france / osef
-req_pousse = 20 #en Newton
-req_ISP = 290 #en s
+    hypothese_poids = hy1 # 1=prit en compte ou 0 = inactif
+    hypothese_conso = hy2 # 1 ou 0
+    hypothese_cout = hy3 # 1 ou 0
 
-europe = ["France","Allemagne","Belgique","Italie","Espagne"]
-
-entete = ["nom","poids(kg)","consomation(W)","cout(€)","origine(pays)","ISP(s)","poussée(N)"]
-m1 = ["OmeletteFromage",0.7,2,4000,"France",250,20]
-m2 = ["Jaeger1000",0.8,5,5000,"Allemagne",320,22]
-m3 = ["Gun&Engine",2,3,3500,"USA",350,50]
-m4 = ["Cocorico_Max",0.6,1.5,3500,"France",300,15]
-m5 = ["FriteSat",0.5,0.5,3500,"Belgique",300,19]
-m6 = ["BierePousseur",1.2,2.3,7000,"Belgique",291,30]
-m7 = ["BigBurger",1.4,6,5000,"USA",300,30]
-m8 = ["Fraternité_7",1.4,3,5000,"France",300,30]
-mot = [m1,m2,m3,m4,m5,m6,m7,m8]
-
-print("Liste initiale, avec",len(mot),"moteurs:")
-print(" ")
-for x1 in range(len(mot)):
-    print(mot[x1])
-print(" ")
-
-print("-----------------------------------------")
-print("Partie 1 du code : Le tri initial")
-print("-----------------------------------------")
-print(" ")
-#la partie 1 s'occupe de gérer les paramètres spécifiques aux composants.
-#c'est ici qu'on exclue ce qui n'est pas compatible avec le CDC (Cahier des Charges)
-l1 = len(mot)
-x=0
-while x < l1:
-    #première boucle pour retirer les cas hors scope
-    try:
-        if mot[x][6]<req_pousse:
-            #ici on regarde la poussée, si c'est trop bas on retire la ligne
-            #et on reprend à la ligne 0
-            del mot[x]
-            x=0
-        elif mot[x][5]<req_ISP:
-            #ici on regarde l'ISP, si c'est trop bas on retire la ligne
-            #et on reprend à la ligne 0
-            del mot[x]
-            x=0
-        elif req_origine == "europe":
-            #ici on regarde l'origine, si pas en europe on retire la ligne
-            #et on reprend à la ligne 0
-            #sinon on avance
-            if mot[x][4] not in europe:
-                del mot[x]
-                x=0
-            else:
-                x+=1
-        elif req_origine == "france":
-            #ici on regarde l'origine, si pas en france on retire la ligne
-            #et on reprend à la ligne 0
-            #sinon on avance
-            if mot[x][4] != "France":
-                del mot[x]
-                x=0
-            else:
-                x+=1
-        else:
-            #cas osef pour les necessités
-            x+=1         
-    except:
-        break
-    if len(mot)==0:
-        print("Pas de moteur disponible sous ces conditions")
-
-#maintenant la liste "moteur" n'a que les élements compatible avec le CDC
-#il s'agit de la liste candidat
-print("Liste après tri, il reste",len(mot),"moteurs en compétition:")
-print(" ")
-for x1 in range(len(mot)):
-    print(mot[x1])
-print(" ")
-#%%
-print("-----------------------------------------")
-print("Partie 2 du code : La comparaison")
-print("-----------------------------------------")
-print(" ")
-#la partie 2 s'occupe de géré prendre de compte les hypothèses de choix.
-#c'est ici qu'on choisi lequel est le meilleur
-poids = [0]*len(mot)
-cout = [0]*len(mot)
-isp = [0]*len(mot)
-poussee = [0]*len(mot)
-conso = [0]*len(mot)
-
-for x in range(len(mot)):
-    poids[x]=mot[x][1]
-    conso[x]=mot[x][2]
-    cout[x]=mot[x][3]
-    isp[x]=mot[x][5]
-    poussee[x]=mot[x][6]
-
-#ici on normalise par le max de la série candidat pour que tou soi comparable
-Poids = np.array(poids)
-Poids = Poids/max(Poids)
-Conso = np.array(conso)
-Conso = Conso/max(Conso)
-Cout = np.array(cout)
-Cout = Cout/max(Cout)
-ISP = np.array(isp)
-ISP = ISP/max(ISP)
-Poussee = np.array(poussee)
-Poussee = Poussee/max(Poussee)
-
-#ici on prend en compte les hypothèses
-#le cas particulier où tt les hypothèses sont nulles,
-#alors on cherche le plus proche possible des caractéristiques spécifiques
-#ici pour un moteur ISP et Poussée
-if hypothese_poids==0 and hypothese_conso==0 and hypothese_cout==0:
-    score = ISP+Poussee
-else:
-    score = hypothese_poids*Poids + hypothese_conso*Conso + hypothese_cout*Cout
-
-score_min = min(score)
-index_min = [i for i, x in enumerate(score) if x==score_min]
-
-resultat = [0]*len(index_min)
-for x in range(len(index_min)):
-    resultat[x]=mot[index_min[x]]
+    req_origine = req_O #europe / france / osef
+    req_pousse = req_POUSSEE #en Newton
+    req_ISP = req_ISP #en s
     
-print("Voici le(s) meillieur(s) moteur(s):")
-print(" ")
-for x1 in range(len(resultat)):
-    print(resultat[x1])
-print(" ")
+    Europe = ["Allemagne","Autriche","Belgique","France","Italie","Espagne","Finlande","Luxembourg","Norvège","Suède"]
+    OTAN = ["Allemagne","France","Etats-Unis"]
+    #------------------------------------------------------------------------------
+    #la partie 1 s'occupe de gérer les paramètres spécifiques aux composants.
+
+    #boucle de l'origine
+    if req_origine == "Par Défault":
+        #par défaut, si on s'en fou de l'origine on prend tt le monde
+        MOTEUR = MOTEUR
+    elif req_origine == "Europe":
+        #ici on prend que ce qui est dans l'europe
+        MOTEUR = MOTEUR[MOTEUR['Origine (Pays)'].isin(Europe)]
+    elif req_origine == "OTAN":
+        #ici on prend que ce qui est dans l'OTAN
+        MOTEUR = MOTEUR[MOTEUR['Origine (Pays)'].isin(OTAN)]
+    else:
+        #dans les autres cas c'est qu'on regarde que le pays
+        MOTEUR.drop(MOTEUR[MOTEUR['Origine (Pays)'] != req_origine].index, inplace = True)
+        
+    #c'est ici qu'on exclue ce qui n'est pas compatible avec le CDC (Cahier des Charges)
+    MOTEUR.drop(MOTEUR[MOTEUR['ISP (s)'] <= req_ISP].index, inplace = True)
+    MOTEUR.drop(MOTEUR[MOTEUR['Poussée (N)'] <= req_pousse].index, inplace = True)
+    
+    #ici on retire les "NaN" pour ceux qu'on veux comparer
+    if hypothese_poids==1:
+        MOTEUR = MOTEUR.dropna(subset=['Poids (kg)'])
+    if hypothese_conso==1:
+        MOTEUR = MOTEUR.dropna(subset=['Conso (W)'])
+    if hypothese_cout==1:
+        MOTEUR = MOTEUR.dropna(subset=['Cout (€)'])
+    
+    #maintenant la liste "MOTEUR" n'a que les élements compatible avec le CDC
+    #il s'agit de la liste candidat
+    
+    #------------------------------------------------------------------------------
+    #la partie 2 s'occupe de géré prendre de compte les hypothèses de choix.
+    #c'est ici qu'on choisi lequel est le meilleur
+    
+    if len(MOTEUR)>0:
+    #ci-dessous on récupère toutes les colonnes sous forme vectoriel
+    #au passage on normalise entre 0 et 1 (fonction custom)
+    #aussi on remplace "NaN" par un chiffre très gros
+        Poids = np.nan_to_num( normalisation(MOTEUR['Poids (kg)'].to_numpy()), nan=2e64)
+        Conso = np.nan_to_num( normalisation(MOTEUR['Conso (W)'].to_numpy()), nan=2e64)
+        Cout = np.nan_to_num( normalisation(MOTEUR['Cout (€)'].to_numpy()), nan=2e64)
+        ISP = np.nan_to_num( normalisation(MOTEUR['ISP (s)'].to_numpy()), nan=2e64)
+        Poussee = np.nan_to_num( normalisation(MOTEUR['Poussée (N)'].to_numpy()), nan=2e64)
+        
+        #ici on prend en compte les hypothèses
+        if hypothese_poids==0 and hypothese_conso==0 and hypothese_cout==0:
+            #Cas par défaut sans hypothèse, on cherche au plus proche du CDC
+            #ici pour un moteur: ISP et Poussée
+            score = ISP+Poussee
+        else:
+            #Autre cas, on prend le reste en compte :
+            #Si on prend pas en compte un paramètre, on le multiplie par 0
+            score = Poids*hypothese_poids + Conso*hypothese_conso + Cout*hypothese_cout
+        
+        #Ici on prend en compte si il y a plusieurs candidats
+        score_min = min(score)
+        index_min = [i for i, x in enumerate(score) if x==score_min]
+        
+        return MOTEUR.iloc[index_min[0],0]
+    else:
+        return "Pas de moteur dans ces conditions"
+
+BIMILA = CHOIX_MOTEUR(0, 0, 0, "Etats-Unis", 0.001, 100)
