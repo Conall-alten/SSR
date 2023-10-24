@@ -52,7 +52,6 @@ def indice_max(liste):
         ind_max est l'indice du maximum de la liste'
 
     """
-    
     maxi = liste[0]
     for i in range(len(liste)):
         if liste[i]>=maxi:
@@ -62,6 +61,19 @@ def indice_max(liste):
 
 # Indice du minimum d'une liste
 def indice_min(liste):
+    """
+    
+
+    Parameters
+    ----------
+    liste : liste de réels
+
+    Returns
+    -------
+    ind_min : entier
+        ind_min est l'indice du minimum de la liste'
+
+    """
     mini = liste[0]
     for i in range(len(liste)):
         if liste[i]<=mini:
@@ -71,6 +83,20 @@ def indice_min(liste):
 
 # Calcule la moyenne des éléments non nuls d'une liste
 def moy_non_null(liste):
+    """
+    
+
+    Parameters
+    ----------
+    liste : liste de réels en secondes
+
+    Returns
+    -------
+    avg : moyennes des éléments non nuls de liste
+    minutes : liste mais en minutes
+    new_revisit_times : liste mais sans les éléments nuls
+
+    """
     new_revisit_times = [] # Secondes
     minutes = []
     n = 0
@@ -88,13 +114,66 @@ def moy_non_null(liste):
     
     return avg, minutes, new_revisit_times
 
-# Convertit 24.768 en '24 min 46 s'
 def minsec(minutes):
-    return str(int(minutes))+" min "+str(int(round(60*(minutes-int(minutes)), 0)))+" s"
+    """
+    
+
+    Parameters
+    ----------
+    minutes : float
+        DESCRIPTION.
+
+    Returns
+    -------
+    min_sec : TYPE
+        DESCRIPTION.
+
+    """
+    """
+    
+
+    Parameters
+    ----------
+    minutes : nombre réel en minutes (par exemple 24.768)
+
+    Returns
+    -------
+    min_sec : string de la forme '24 min 46 s'
+
+    """
+
+    min_sec = str(int(minutes))+" min "+str(int(round(60*(minutes-int(minutes)), 0)))+" s"
+    return min_sec
     
 # Donne les coefficients des polynômes d'interpolation des courbes lat vs res
 # pour chaque altitude, et les range dans une matrice (ligne N = altitude N)
 def get_coeff(deg, res_sol_tot, altitudes, ang_list, h):
+    """
+    
+
+    Parameters
+    ----------
+    deg : integer
+        Degré du polynôme d'interpolation.
+    res_sol_tot : list
+        Liste des sous-listes de résolutions.
+    altitudes : list
+        Liste des altitudes.
+    ang_list : TYPE
+        DESCRIPTION.
+    h : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    mymodel : TYPE
+        DESCRIPTION.
+    myline : TYPE
+        DESCRIPTION.
+    M : TYPE
+        DESCRIPTION.
+
+    """
 
     plt.plot(res_list, ang_list, label=str(altitudes[h])+"km")#, c=colors[h])
     plt.title(r"Interpolations entre "+str(res_sol_tot[0][0])+" et "+str(res_sol_tot[-1][-1])+" m")
@@ -151,44 +230,46 @@ def doublons_moyenne(liste1, liste2):
 
 # Paramètres de la constellation 1
 
-orbit1 = "\RCO" # Type d'orbite (RCO, SSO, CITROUILLE)
-#orbit1 = "\CITROUILLE"
-#orbit1 = "\SSO"
+const1 = "\RCO" # Type d'orbite (RCO, SSO, CITROUILLE)
+#const1 = "\CITROUILLE"
+#const1 = "\SSO"
 sat1 = 2 # Nombre de satellites par plan (~2)
 plan1 = 4 # Nombre de plans (~4 - ~12)
 inc1 = "50" # Inclinaison des orbites (47, 51..., couplées 48_50, 47_49_50, ou
                # 0 si SSO) ou latitude du point focal pour une constellation 
                # citrouille
-alt1 = 100 # Altitude (150 - 500 km)
-res1 = 0.85   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
+alt1 = 500 # Altitude (150 - 500 km)
+IPS1 = 0
+res1 = 3.0   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
              # RCO_2x4_50_260_1.5, RCO_2x4_50_260_1, RCO_2x4_50_260_2.5)). Il 
              # faut donc écrire 1.0, 2.0 ou 3.0 au lieu de 1, 2 et 3 pour avoir
              # 1.0 avant 1.5
 
-add = "_Luhansk" # Informations supplémentaires (cibles ponctuelles ou origine
+add1 = "_Luhansk" # Informations supplémentaires (cibles ponctuelles ou origine
                  # des satellites notamment)
-add = "_KSZ"
-add = "_FromFrance"
-add = ""
-#add = "_ChainBaseObject"
+add1 = "_KSZ"
+add1 = "_FromFrance"
+add1 = ""
+#add1 = "_ChainBaseObject"
 
 # Paramètres de la constellation 2
 
-orbit2 = "+SSO" # SSO toujours en deuxième position
-orbit2 = "\\SSO" # Si SSO est seule
+const2 = "+SSO" # SSO toujours en deuxième position
+const2 = "\\SSO" # Si SSO est seule
 sat2 = 2 # Nombre de satellites par plan
 plan2 = 15 # Nombre de plans
 inc2 = "50" # Inclinaison des orbites
 inc2 = "90"
 alt2 = 300 # Altitude (150 - 500 km)
+IPS2 = 0
 res2 = 1.6
-
+add2 = ""
 # Nom du fichier csv enregistré depuis STK
 # Privilégier le format orbite_satxplan_inclinaison_altitude_resolution pour 
 # sauvegarder les fichiers -> RCO_2x4_50_260_1.4
 
-name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(res1)+add
-name2 = orbit2+"_"+str(sat2)+"x"+str(plan2)+"_"+str(inc2)+"_"+str(alt2)+"_"+str(res2)
+name1 = const1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(res1)+add1
+name2 = const2+"_"+str(sat2)+"x"+str(plan2)+"_"+str(inc2)+"_"+str(alt2)+"_"+str(IPS2)+"_"+str(res2)+add2
 name2 = ""
 name = name1 + name2
 
@@ -198,7 +279,7 @@ name = name1 + name2
 
 # Type de cible considérée
 folder1 = "\\target_primary"
-#folder1 = "\\hemisphere"
+#folder1 = "\\global"
 #folder1 = "\\files_points"
 #folder1 = "\\target_secondary"
 #folder1 = "\\general_shapes"
@@ -209,14 +290,15 @@ folder2 = "\\FoM_points"
 #folder2 = "\\access_sensors"
 #folder2 = "\\access_ground"
 
+# Supprimer le 3e dossier
 # Paramètre à faire varier
-folder3 = "\\plan"
-folder3 = "\\resolution"
+# folder3 = "\\plan"
+# folder3 = "\\resolution"
 #folder3 = "\\inclination"
 #folder3 = "\\link"
 #folder3 = "\\duration"
-#folder3 = ""
-#folder3 = "IP_Spacing"
+folder3 = ""
+#folder3 = "IPS"
 
 
 path = path_user+folder1+folder2
@@ -305,8 +387,7 @@ if folder2=="\\access_sensors":
     
     for r in res:
         
-        name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(r)+add
-        
+        name1 = const1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(r)+add1
         print(name1)
         
         # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time 
@@ -400,14 +481,12 @@ elif folder2=="\\FoM_points": # Loi des RCO
     plt.xlabel("Latitude (deg)")
     plt.ylabel("Revisit time (min)")
     fig1.savefig(path+name1+name2+".png", dpi=300, pad_inches=0)
-   
     
     # Affiche la zone cible et les latitudes remarquables.
     
     fig2 = plt.figure()
     plt.title("Best = "+minsec(minutes[ind_min])+", worst = " 
               +minsec(minutes[ind_max])+", avg = "+ minsec(avg))
-    
     plt.minorticks_on()   
     plt.scatter(long, lat, s=10)
     
@@ -433,7 +512,6 @@ elif folder2=="\\FoM_points": # Loi des RCO
     fig2.savefig(path+"\map"+name1+name2+"_map.png", dpi=300,
                   pad_inches=0)
     
-  
     # Règle des RCO
     
     # Plot la différence entre la latitude de revisite minimale et
@@ -460,8 +538,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
     try:
         alt = [100, 180, 260, 300, 500]
         deg = 4
-        N = len(alt)
-        M = np.zeros((N, deg+1))
+        M = np.zeros((len(alt), deg+1))
         #alt = [100]
         # Résolution au nadir (compose le nom de fichiers existants)
         #res = [0.85, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
@@ -475,15 +552,11 @@ elif folder2=="\\FoM_points": # Loi des RCO
             c+=1
             res_list = []
             lat_diff_min = []
-            lat_diff_max = []
-            
+            lat_diff_max = []  
             for r1 in res:
                 for r2 in r1:
-                    
-                
                     res_list.append(r2)
-                    
-                    name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+inc1+"_"+str(a)+"_"+str(r2)
+                    name1 = const1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(a)+"_"+str(IPS1)+"_"+str(r2)+add1
                     print(name1)
                     N = sat1*plan1
                     # Le délimiteur peut être , ou ; (changer si KeyError)
@@ -542,7 +615,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
                     myline = np.linspace(res_list[0], res_list[-1], 100)
                     for m in range(len(mymodel)+1):
         
-                        print(mymodel[m], "cc2 =", c, ", m =", m)
+                        print("coeff",str(m),"=", mymodel[m], ", cc2 =", c)
                         M[c][m]=mymodel[m]
                         print("r2",r2_score(lat_diff_min, mymodel(res_list)))
                     plt.plot(myline, mymodel(myline), linestyle=':')
@@ -551,13 +624,13 @@ elif folder2=="\\FoM_points": # Loi des RCO
             
             plt.plot(res_list, lat_diff_min, marker="o", 
                       label="Inc - best at "+str(a)+"km", c=colors[c])
-            plt.plot(res_list, lat_diff_max, marker="o", 
-                      label="Inc - worst at "+str(a)+"km", c=colors[c], 
-                      linestyle=':')
+            # plt.plot(res_list, lat_diff_max, marker="o", 
+            #           label="Inc - worst at "+str(a)+"km", c=colors[c], 
+            #           linestyle=':')
             plt.title("Difference in latitude at "+str(inc1)+"°")
             plt.xlabel("Resolution")
             plt.ylabel("Latitude (deg)")
-            plt.xlim(0)
+            # plt.xlim(0)
         plt.legend()
         plt.minorticks_on()
         plt.grid(True, which="major", color="k", linestyle="-")
@@ -582,7 +655,7 @@ elif folder2=="\\region":
     for r in res:
         
         res_list.append(r)
-        name1 = orbit1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(r)
+        name1 = const1+"_"+str(sat1)+"x"+str(plan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(r)+add1
         # Traitement du fichier csv
         N = sat1*plan1
         # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams
