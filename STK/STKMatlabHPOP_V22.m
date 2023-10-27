@@ -22,14 +22,17 @@ root.ExecuteCommand('Animate * Reset');
 alt = 250; % Altitude
 inc = 96.5; % Inclination
 IPS = 10; % Interplane Spacing
-Np = 12; % Number of orbital plans
+Np = 8; % Number of orbital plans
 Nsp = 2; % Number of satellites per orbital plan
 Nst = Np*Nsp; % Total number of satellites
 
 % Adding the Area Target
 location1 = root.CurrentScenario.Children.New('eAreaTarget', 'ConflictRostov'); % Type, Name
 location1.AreaTypeData.RemoveAll;
+location2 = root.CurrentScenario.Children.New('eAreaTarget', 'Conflict');
+location2.AreaTypeData.RemoveAll;
 
+% Coordinates
 %% Conflict+Rostov coordinates
 
 ConflictRostov = {46.8737462218482,	38.6812131301242;
@@ -510,9 +513,6 @@ ConflictRostov = {46.8737462218482,	38.6812131301242;
 46.8441634884653,	38.9338380472548;
 46.8373957403942,	38.7013299375023};
 
-location1.CommonTasks.SetAreaTypePattern(ConflictRostov);
-location2 = root.CurrentScenario.Children.New('eAreaTarget', 'Conflict');
-location2.AreaTypeData.RemoveAll;
  
 %% Conflict coordinates
 Conflict = {
@@ -1073,6 +1073,8 @@ Conflict = {
 46.650828, 31.929016
     };
 
+%%
+location1.CommonTasks.SetAreaTypePattern(ConflictRostov);
 location2.CommonTasks.SetAreaTypePattern(Conflict);
 %% Rectangular areas
 
@@ -1145,7 +1147,7 @@ for i=0:Np-1
     keplerian.Orientation.Inclination = inc;   % deg
     keplerian.Orientation.ArgOfPerigee = 0; % deg
     keplerian.Orientation.AscNode.Value = 360*i/Np; % deg
-    keplerian.Location.Value = rem(180*IPS*i/Np+360*rem(i,2)/Nsp,360); % à modifier car l'ISP ne fonctionne pas
+    keplerian.Location.Value = 0; %rem(180*IPS*i/Np+360*rem(i,2)/Nsp,360); % à modifier car l'ISP ne fonctionne pas
 
     % Permet d'éviter les collisions en déphasant les satellites, pas
     % nécessaire pour Np impair
@@ -1210,7 +1212,7 @@ for i=0:Np-1
     keplerian.Orientation.Inclination = inc; % deg
     keplerian.Orientation.ArgOfPerigee = 180; % deg
     keplerian.Orientation.AscNode.Value = 360*i/Np; % deg
-    keplerian.Location.Value = rem(180*IPS*i/Np+360*rem(i+1,2)/Nsp,360); % à modifier car l'ISP ne fonctionne pas
+    keplerian.Location.Value = 0; %rem(180*IPS*i/Np+360*rem(i+1,2)/Nsp,360); % à modifier car l'ISP ne fonctionne pas
     satellite(2*i+2).Propagator.InitialState.Representation.Assign(keplerian);
 
     % Standard commands to allow the propagation with HPOP
@@ -1274,7 +1276,7 @@ for i=1:Ngs
     gs_sensor(i).CommonTasks.SetPatternSimpleConic(5,0.17453293); % sensor properties (FOV, angular resolution)
     gs_sensor(i).Graphics.FillVisible = true;
     gs_sensor(i).Graphics.PercentTranslucency = 10;
-    gs_sensor(i).CommonTasks.SetPointingTargetedTracking('eTrackModeTranspond', 'eBoresightRotate', 'Constellation/sat');
+    gs_sensor(i).CommonTasks.SetPointingTargetedTracking('eTrackModeTranspond', 'eBoresightRotate', 'Constellation/sat'); % tracking the satellites
 
     % Assigns receiver to sensor
     receiver(i) = gs_sensor(i).Children.New('eReceiver', 'receiver'+string(i));
@@ -1298,7 +1300,7 @@ covGrid = RevConflict.Grid;
 bounds = covGrid.Bounds;
 bounds.AreaTargets.Add('AreaTarget/ConflictRostov');
 Res = covGrid.Resolution;
-Res.LatLon = .1; % Define the Grid Resolution (deg). If the mesh is too thin and/or the region is too large, the calculations may last quite long.
+Res.LatLon = .5; % Define the Grid Resolution (deg). If the mesh is too thin and/or the region is too large, the calculations may last quite long.
 
 RevConflict.AssetList.Add('Constellation/sat_sensor'); % Assigns the sensors constellation to the coverage definition
 

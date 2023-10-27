@@ -3,36 +3,38 @@ clc;clear all;close all;
 import STKUtil.*;
 import AGI.STK.*;
 
-% V3 : essayer de ne pas scinder les cas pair et impair pour les numéris
-% des satellites
 % Starting STK
- 
 app = actxserver('STK11.application'); % This is a standard input to allow the integration between stk and matlab
 root = app.Personality2; 
  
 % Creating the Scenario
-start_day = 1;
-duration = 2; % days
-month = 'Aug'; % 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+start_day = 1; % Starting day of the month
+end_day = 5; % days
+start_month = 'Aug'; % 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+end_month = 'Aug'; % 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 scenario = root.Children.New('eScenario','SSR');
-scenario.SetTimePeriod(string(start_day)+' '+string(month)+' 2023 10:30:00.000',string(duration)+' '+string(month)+' 2023 10:30:00.000');
-scenario.StartTime = string(start_day)+' '+string(month)+' 2023 10:30:00.000';
-scenario.StopTime = string(duration)+' '+string(month)+' 2023 10:30:00.000';
+scenario.SetTimePeriod(string(start_day)+' '+string(start_month)+' 2023 10:30:00.000',string(end_day)+' '+string(end_month)+' 2023 10:30:00.000');
+scenario.StartTime = string(start_day)+' '+string(start_month)+' 2023 10:30:00.000';
+scenario.StopTime = string(end_day)+' '+string(end_month)+' 2023 10:30:00.000';
 root.ExecuteCommand('Animate * Reset');
 
 % RCO parameters
-
-alt = 300;
-inc = 50;
-Nst=8; % Total number of satellites
-Nsp=2; % Number of satellites per orbital plan
-Np=Nst/Nsp;
+alt = 250; % Altitude
+inc = 96.5; % Inclination
+IPS = 10; % Interplane Spacing
+Np = 8; % Number of orbital plans
+Nsp = 2; % Number of satellites per orbital plan
+Nst = Np*Nsp; % Total number of satellites
 
 % Adding the Area Target
- 
-location1 = root.CurrentScenario.Children.New('eAreaTarget', 'ConflictRostov');
+location1 = root.CurrentScenario.Children.New('eAreaTarget', 'ConflictRostov'); % Type, Name
 location1.AreaTypeData.RemoveAll;
+location2 = root.CurrentScenario.Children.New('eAreaTarget', 'Conflict');
+location2.AreaTypeData.RemoveAll;
+
+% Coordinates
 %% Conflict+Rostov coordinates
+
 ConflictRostov = {46.8737462218482,	38.6812131301242;
 46.9104794792644,	38.8544164956015;
 46.9675700965622,	38.8992104694331;
@@ -510,11 +512,7 @@ ConflictRostov = {46.8737462218482,	38.6812131301242;
 46.8204726405042,	38.8893152177274;
 46.8441634884653,	38.9338380472548;
 46.8373957403942,	38.7013299375023};
-%%
-location1.CommonTasks.SetAreaTypePattern(ConflictRostov);
 
-location2 = root.CurrentScenario.Children.New('eAreaTarget', 'Conflict');
-location2.AreaTypeData.RemoveAll;
  
 %% Conflict coordinates
 Conflict = {
@@ -1075,14 +1073,17 @@ Conflict = {
 46.650828, 31.929016
     };
 
+%%
+location1.CommonTasks.SetAreaTypePattern(ConflictRostov);
 location2.CommonTasks.SetAreaTypePattern(Conflict);
 %% Rectangular areas
 
+% Création du carré ABCD dans le sens des aiguilles d'une montre
 yA=60; % Latitude du point supérieur gauche
 xA=45; % Longitude du point supérieur gauche
 yB=50; % Latitude du point inférieur droit
 xB=55; % Longitude du point inférieur droit
-% Carré ABCD dans le sens des aiguilles d'une montre
+
 xC=xA;
 yC=yB;
 xD=xB;
@@ -1096,69 +1097,43 @@ boundary = {yA, xA; % lat, lon
 zone = location3.CommonTasks.SetAreaTypePattern(boundary);
 
 
-% fid = fopen('ukraine.txt', 'r');
-% 
-% % Lire les données du fichier texte
-% data = fscanf(fid, '%f %f', [2 Inf]);
-% fclose(fid);
-% 
-% % Transposer les données pour avoir une colonne par paire de coordonnées
-% data = data';
-% 
-% % Créer la chaîne de caractères de sortie au format souhaité
-% string = '{';
-% for i = 1:size(data, 1)
-%     string = [string, sprintf('%0.12f, %0.12f;\n', data(i, 1), data(i, 2))];
-% end
-% ukraine = [string, '}'];
-% 
-% location3.CommonTasks.SetAreaTypePattern(ukraine);
-% 
-
-
-% Adding the Target points
-%
-% load ('Ukfrontline.mat');
-% 
-% for i=1:length(Ukfrontline)
-%     s1 = num2str(i);
-%     punto(i)=scenario.Children.New('eTarget',s1);
-%     punto(i).Position.AssignGeodetic(Ukfrontline(i,1),Ukfrontline(i,2),0);
-% end
- 
-
-
 %% 
 % Adding the Spacecraft
 % selecting the orbital propagator (HPOP is very precise considering several disturbances)
 
+
 for i=1:Nst
-    
-    % Odd number sats
-    satellite(i) = root.CurrentScenario.Children.New('eSatellite','Sat'+string(i));
+        satellite(i) = root.CurrentScenario.Children.New('eSatellite','sat'+string(i));
     satellite(i).SetPropagatorType('ePropagatorHPOP');
     set(satellite(i).Propagator, 'Step', 5);
     keplerian = satellite(i).Propagator.InitialState.Representation.ConvertTo('eOrbitStateClassical'); % Use the Classical Element interface
     keplerian.SizeShapeType = 'eSizeShapeAltitude';  % Changes from Ecc/Inc to Perigee/Apogee Altitude
     keplerian.LocationType = 'eLocationTrueAnomaly'; % Makes sure True Anomaly is being used
+
     % specifying orbital parameters
     keplerian.SizeShape.PerigeeAltitude = alt; % km
     keplerian.SizeShape.ApogeeAltitude = alt;  % km
-    keplerian.Orientation.Inclination = inc;    % deg
-
+    keplerian.Orientation.Inclination = inc;   % deg
     if rem(i,2) == 0 % Even number satellites
         keplerian.Orientation.ArgOfPerigee = 180; % deg
-        keplerian.Orientation.AscNode.Value = 360/Np-(360/Np)*(Np-i+1); % voir matlab citrouille
+        keplerian.Orientation.AscNode.Value = 180*i/Np; % deg
     else % Odd number satellites
         keplerian.Orientation.ArgOfPerigee = 0; % deg
-        keplerian.Orientation.AscNode.Value = 360/Np-(360/Np)*(Np-i+1);
+        keplerian.Orientation.AscNode.Value = 180*i/Np;
     end
-    keplerian.Location.Value = 0; % deg
-    keplerian.Orientation.AscNode.Value = 270+360/Np-(360/Np)*(Np-i+1);   % deg
+    keplerian.Location.Value = rem(180*IPS*i/Np+360*rem(i,2)/Nsp,360); % à modifier car l'ISP ne fonctionne pas
+
+    % Permet d'éviter les collisions en déphasant les satellites, pas
+    % nécessaire pour Np impair
+    % if rem(i,2) == 0
+    %     keplerian.Orientation.ArgOfPerigee = 0+90*rem(floor(i/2),2); % deg
+    % else
+    %     keplerian.Orientation.ArgOfPerigee = 360/Nsp+90*rem(floor(i/2),2); % deg
+    % end
+    
     satellite(i).Propagator.InitialState.Representation.Assign(keplerian);
 
     % standard to allow the propagation with HPOP
-
     forceModel = satellite(i).Propagator.ForceModel;
     forceModel.CentralBodyGravity.File = 'C:\Program Files\AGI\STK 11\STKData\CentralBodies\Earth\WGS84_EGM96.grv';
     forceModel.CentralBodyGravity.MaxDegree = 40;
@@ -1177,6 +1152,7 @@ for i=1:Nst
     integrator.Interpolation.Method=1;
     integrator.Interpolation.Order=7;
     satellite(i).Propagator.Propagate();
+    
     %% Attaching the optical payload and the antenna to every sc
     sensor(i)=satellite(i).Children.New('eSensor', 'camera'+string(i));
     sensor(i).CommonTasks.SetPatternSimpleConic(10,0.17453293); % sensor properties (FOV, angular resolution) 
@@ -1186,9 +1162,6 @@ for i=1:Nst
     projection.FillPersistence = false;
     sensor(i).Graphics.FillVisible = true;
     sensor(i).Graphics.PercentTranslucency = 90;
-
-    transmitter(i) = satellite(i).Children.New('eTransmitter', 'transmitter'+string(i));
-
     % sensor(i).CommonTasks.SetPatternRectangular(2.22,2.22);
     % sensor(i).CommonTasks.SetPointingSpinning(0, 1.27222e-14, 90, 'eSnUnidirectional', 0.01, 0, 160, 200);
     attitudePointing = satellite(i).Attitude.Pointing;
@@ -1196,43 +1169,158 @@ for i=1:Nst
     attitudePointing.Targets.RemoveAll;
     attitudePointing.Targets.Add('AreaTarget/ConflictRostov');
     attitudePointing.TargetTimes.UseAccessTimes;
+
+    % Transmitter
+    transmitter(i) = satellite(i).Children.New('eTransmitter', 'transmitter'+string(i));
 end
+% 
+% 
+% for i=1:Nst
+% 
+%     satellite(i) = root.CurrentScenario.Children.New('eSatellite','Sat'+string(i));
+%     satellite(i).SetPropagatorType('ePropagatorHPOP');
+%     set(satellite(i).Propagator, 'Step', 5);
+%     keplerian = satellite(i).Propagator.InitialState.Representation.ConvertTo('eOrbitStateClassical'); % Use the Classical Element interface
+%     keplerian.SizeShapeType = 'eSizeShapeAltitude';  % Changes from Ecc/Inc to Perigee/Apogee Altitude
+%     keplerian.LocationType = 'eLocationTrueAnomaly'; % Makes sure True Anomaly is being used
+%     % specifying orbital parameters
+%     keplerian.SizeShape.PerigeeAltitude = alt; % km
+%     keplerian.SizeShape.ApogeeAltitude = alt;  % km
+%     keplerian.Orientation.Inclination = inc;    % deg
+% 
+%     if rem(i,2) == 0 % Even number satellites
+%         keplerian.Orientation.ArgOfPerigee = 180; % deg
+%         keplerian.Orientation.AscNode.Value = 180*i/Np; % deg
+%     else % Odd number satellites
+%         keplerian.Orientation.ArgOfPerigee = 0; % deg
+%         keplerian.Orientation.AscNode.Value = 180*i/Np;
+%     end
+%     keplerian.Location.Value = 0; % deg
+%     satellite(i).Propagator.InitialState.Representation.Assign(keplerian);
+% 
+%     % standard to allow the propagation with HPOP
+% 
+%     forceModel = satellite(i).Propagator.ForceModel;
+%     forceModel.CentralBodyGravity.File = 'C:\Program Files\AGI\STK 11\STKData\CentralBodies\Earth\WGS84_EGM96.grv';
+%     forceModel.CentralBodyGravity.MaxDegree = 40;
+%     forceModel.CentralBodyGravity.MaxOrder = 40;
+%     forceModel.Drag.Use=1;
+%     forceModel.Drag.DragModel.Cd=0;
+%     forceModel.Drag.DragModel.AreaMassRatio=0;
+%     forceModel.SolarRadiationPressure.Use=0;
+%     integrator = satellite(i).Propagator.Integrator;
+%     integrator.DoNotPropagateBelowAlt=-1e6;
+%     integrator.IntegrationModel=3;
+%     integrator.StepSizeControl.Method=1;
+%     integrator.StepSizeControl.ErrorTolerance=1e-13;
+%     integrator.StepSizeControl.MinStepSize=0.1;
+%     integrator.StepSizeControl.MaxStepSize=30;
+%     integrator.Interpolation.Method=1;
+%     integrator.Interpolation.Order=7;
+%     satellite(i).Propagator.Propagate();
+%     %% Attaching the optical payload and the antenna to every sc
+%     sensor(i)=satellite(i).Children.New('eSensor', 'camera'+string(i));
+%     sensor(i).CommonTasks.SetPatternSimpleConic(10,0.17453293); % sensor properties (FOV, angular resolution) 
+%     projection = sensor(i).Graphics.Projection;
+%     projection.Persistence = 3600;  % sec
+%     projection.ForwardPersistence = true;
+%     projection.FillPersistence = false;
+%     sensor(i).Graphics.FillVisible = true;
+%     sensor(i).Graphics.PercentTranslucency = 90;
+% 
+%     transmitter(i) = satellite(i).Children.New('eTransmitter', 'transmitter'+string(i));
+% 
+%     % sensor(i).CommonTasks.SetPatternRectangular(2.22,2.22);
+%     % sensor(i).CommonTasks.SetPointingSpinning(0, 1.27222e-14, 90, 'eSnUnidirectional', 0.01, 0, 160, 200);
+%     attitudePointing = satellite(i).Attitude.Pointing;
+%     attitudePointing.UseTargetPointing = 1;
+%     attitudePointing.Targets.RemoveAll;
+%     attitudePointing.Targets.Add('AreaTarget/ConflictRostov');
+%     attitudePointing.TargetTimes.UseAccessTimes;
+% end
 
 const_sat_sensor = root.CurrentScenario.Children.New('eConstellation', 'sat_sensor');
 const_sat_transmitter = root.CurrentScenario.Children.New('eConstellation', 'sat_transmitter');
 const_sat = root.CurrentScenario.Children.New('eConstellation', 'sat');
 
 for k=1:Nst
+    const_sat.Objects.AddObject(satellite(k));
     const_sat_sensor.Objects.AddObject(sensor(k));
     const_sat_transmitter.Objects.AddObject(transmitter(k));
-    const_sat.Objects.AddObject(satellite(k));
 end
 
 % Adding the Ground Stations
-
 targets = readcell('outremer.txt');
-Ngs = length(targets);
+Ngs = length(targets)-44; % Pour pas tout mettre parce que c'est long
 for i=1:Ngs
     facility(i) = root.CurrentScenario.Children.New('eFacility', strcat(string(targets(i,4))));
     facility(i).Position.AssignGeodetic(cell2mat(targets(i,1)),cell2mat(targets(i,2)),0);  % assign LAT and LON
     gs_sensor(i) = facility(i).Children.New('eSensor', 'sensor'+string(i)); % add a sensor to the facility
+
+    % Assigns sensor to facility
     gs_sensor(i).CommonTasks.SetPatternSimpleConic(5,0.17453293); % sensor properties (FOV, angular resolution)
     gs_sensor(i).Graphics.FillVisible = true;
     gs_sensor(i).Graphics.PercentTranslucency = 10;
-    gs_sensor(i).CommonTasks.SetPointingTargetedTracking('eTrackModeTranspond', 'eBoresightRotate', 'Constellation/sat');
+    gs_sensor(i).CommonTasks.SetPointingTargetedTracking('eTrackModeTranspond', 'eBoresightRotate', 'Constellation/sat'); % tracking the satellites
 
+    % Assigns receiver to sensor
     receiver(i) = gs_sensor(i).Children.New('eReceiver', 'receiver'+string(i));
 end
 
-const_gs_receiver = root.CurrentScenario.Children.New('eConstellation', 'gs_receiver');
+const_gs_receiver = root.CurrentScenario.Children.New('eConstellation', 'gs_receiver'); % Constellation of the ground stations' receivers
 for i=1:Ngs
     const_gs_receiver.Objects.AddObject(receiver(i));
 end
 
-const_gs_sensor = root.CurrentScenario.Children.New('eConstellation', 'gs_sensor');
+const_gs_sensor = root.CurrentScenario.Children.New('eConstellation', 'gs_sensor'); % Constellation of the ground stations' sensors
 for i=1:Ngs
     const_gs_sensor.Objects.AddObject(gs_sensor(i));
 end
+
+% Coverage Definition
+customRegion = root.GetObjectFromPath('AreaTarget/ConflictRostov'); % Region to be observed
+RevConflict = scenario.Children.New('eCoverageDefinition', 'RevConflict'); % Coverage definition
+RevConflict.Grid.BoundsType = 'eBoundsCustomRegions';
+covGrid = RevConflict.Grid;
+bounds = covGrid.Bounds;
+bounds.AreaTargets.Add('AreaTarget/ConflictRostov');
+Res = covGrid.Resolution;
+Res.LatLon = .5; % Define the Grid Resolution (deg). If the mesh is too thin and/or the region is too large, the calculations may last quite long.
+
+RevConflict.AssetList.Add('Constellation/sat_sensor'); % Assigns the sensors constellation to the coverage definition
+
+% Turn off Show Grid Points
+RevConflict.Graphics.Static.IsPointsVisible = false;
+
+% Advanced Settings for Coverage
+advanced = RevConflict.Advanced;
+advanced.AutoRecompute = false;
+% advanced.DataRetention = 'eAllData';
+% advanced.SaveMode = 'eSaveAccesses';
+
+% Figure of Merit
+fom = RevConflict.Children.New('eFigureofMerit','RevisitTime'); % New FoM
+fom.SetDefinitionType('eFmRevisitTime'); % Revisit
+fom.Definition.SetComputeType('eAverage'); % Average
+fom.Definition.Satisfaction.EnableSatisfaction = true;
+
+% FoM Contours
+satisfaction = RevConflict.Graphics.Static;
+satisfaction.IsRegionVisible = false;
+Animation = fom.VO.Animation;
+Animation.IsVisible = false;
+VOcontours = fom.VO.Static;
+VOcontours.IsVisible = true;
+contours = fom.Graphics.Static.Contours;
+contours.IsVisible = true;
+contours.ContourType = 'eSmoothFill';
+contours.ColorMethod = 'eColorRamp';
+contours.LevelAttributes.RemoveAll;
+contours.LevelAttributes.AddLevelRange(800, 2000, 200);   %Start, Start, Step
+contours.RampColor.StartColor = 16711680;     %Blue
+contours.RampColor.EndColor = 255;        %Red
+
+RevConflict.ComputeAccesses();
 
 % Creating a chain
 chain = root.CurrentScenario.Children.New('eChain', 'MyChain');
@@ -1259,6 +1347,3 @@ chainUserTimePeriod.TimeInterval.SetExplicitInterval( ...
 
 % Compute the chain
 chain.ComputeAccess();
-
-access = const_sat_sensor.GetAccessToObject('AreaTarget/ConflictRostov');
-access.ComputeAccess();
