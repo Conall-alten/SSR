@@ -1,0 +1,6 @@
+﻿name,mass (kg),power (W),thrust (N),Isp (s)
+bradford Comet -1000,0.74,55,0.017,175
+bradford-comet - 8000,2.075,55,0.017,175
+Pale Blue resistojet thruster mini,0.52,9,0.001,45
+Pale Blue resistojet thruster,1.209,20,0.001,70
+Steam Tunacan,0.41,20,0.006,172

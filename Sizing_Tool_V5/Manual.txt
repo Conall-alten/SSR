@@ -1,0 +1,16 @@
+Code Description
+Sizing Tool V4 works lie this:
+GUI.py imports Spacecraft_Sizing_Tool.py anad accepts the following inputs: [altitude, resolution, fauchée, durée de vie, pictures per orbit]
+it uses the sizing rules in Spacecraft_Sizing_Tool to output subsystem mass and power budgets for the spacecraft desgin
+
+To Use Sizing Tool V5:
+ - Open GUI.py in spyder or any IDE
+ - click run
+ - the graphical user interface will open
+ - input parameters
+ - click run
+ - read outputs
+
+Added since V4
+Range of possible input values in grey text beside the input boxes
+Comments

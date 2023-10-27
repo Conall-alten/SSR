@@ -18,6 +18,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 cameras = pd.read_csv("cameras.csv")
 e_thrusters = pd.read_csv("Electric_Thrusters.csv", encoding= 'unicode_escape')
 he_thrusters = pd.read_csv("Hall_Effect_Thrusters.csv")
+w_thrusters = pd.read_csv("water_thrusters.csv")
+mo_thrusters = pd.read_csv("Monopropellant_thrusters.csv")
 RW = pd.read_csv("Reaction_Wheels.csv")
 ST = pd.read_csv("Star_Trackers.csv")
 CPUs = pd.read_csv("OBDH.csv")
@@ -25,6 +27,7 @@ db_GNC = pd.read_csv("GNC_modules.csv", encoding = 'unicode_escape')
 Transmitters = pd.read_csv("Transmitters.csv")
 Gyroscopes = pd.read_csv("Gyroscopes.csv")
 dbSS = pd.read_csv("Sunsensors.csv")
+tanks = pd.read_csv("tanks.csv")
 
 #%% Plotting functions
 
@@ -42,9 +45,9 @@ def logplot(x, y, xlabel, ylabel, title): #just like SMAD fidure 13.5
     ax.grid()
     
 ### plotting one line ###
-def plot(x, y, xlabel, ylabel, handle, title): 
+def plot(x, y, xlabel, ylabel, handle, title, colour): 
     plt.figure()
-    plt.plot(x, y, label = handle)
+    plt.plot(x, y, label = handle, color = colour)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -83,7 +86,7 @@ def linear_reg(x, y, intercept):
         sos = 0
         for i in x:
             Errors2 = Errors2 + (y_out(i, m_adj) - y[k])**2
-            sos = sos + (y_out(i, m_adj) - np.mean(y))**2
+            sos = sos + (y[k] - np.mean(y))**2
             R2 = 1 - Errors2/sos
             k=k+1
         ers.append(Errors2)
@@ -94,6 +97,15 @@ def linear_reg(x, y, intercept):
     
     
     return m_q, c, R_squared # returns the slope of the line, the y-intercept and the R2
+#%% linreg Test
+#x = ST["kg"].values[:-3]
+#y = ST["W"].values[:-3]
+#
+#slope, intercept, R2 = linear_reg(x, y, 1)
+#plot(x, x*slope+intercept, "mass", "power", "star-trackers", "linreg test")
+#plt.scatter(x, y)
+#print(slope, intercept, R2)
+    
 #%%
 def polynomial_reg(x, y, intercept):
     curve = np.polyfit(x, y, 2)
@@ -103,7 +115,7 @@ def polynomial_reg(x, y, intercept):
     else:
         c = curve[1]
     def y_out(x_in, m):
-        return x_in*m + c
+        return curve[0]*x_in**2 + curve[1]*x_in + m
     
     adj = m/100
     ers = []
@@ -117,11 +129,12 @@ def polynomial_reg(x, y, intercept):
         sos = 0
         for i in x:
             Errors2 = Errors2 + (y_out(i, m_adj) - y[k])**2
-            sos = sos + (y_out(i, m_adj) - np.mean(y))**2
+            sos = sos + (y[k] - np.mean(y))**2
             R2 = 1 - Errors2/sos
             k=k+1
         ers.append(Errors2)
         R2s.append(R2)
+#        print(R2)
     q = np.argmin(ers)
     R_squared = max(R2s)
     m_q = (m*0.85)+adj*q
@@ -132,13 +145,14 @@ def polynomial_reg(x, y, intercept):
 #%% polynomial_reg test
 #x = np.array(cameras["mass (kg)"])
 #y = np.array(cameras["alt/gsd"])
-#coeffs = np.polyfit(y, x, 2)
+#coeffs = polynomial_reg(y, x, 2)
 #x_gven = np.linspace(0,max(y), 15)
 #y_pred = (x_gven**2)*coeffs[0]+x_gven*coeffs[1]+coeffs[2]
 #plt.figure()
 #plt.scatter(y, x)
 #plt.plot(x_gven, y_pred)
-#
+#print(coeffs)
+
 
 #%%
 def exp_reg(x, y):
@@ -200,15 +214,16 @@ def Rho(alt):
     
 
 molars = {
-        "Xenon": 0.13125, # molar masses of different fuels
-        "Krypton": 0.083798}
+        "Xenon": 0.13125, # molar masses of different fuels kg/mol
+        "Krypton": 0.083798,
+        "Water": 0.0180153}
 #%%
 def m_camera(alt, res):
     coeff, intercept, R2 = polynomial_reg(cameras["alt/gsd"], cameras["mass (kg)"], 0)
     m_camera = (1/2.314)*coeff*(alt/res)**2
     return np.round(m_camera, 3)
 #%%
-m_camera(250000, 1)
+#m_camera(250000, 1)
 #%%
 def p_camera(alt, res):
     k=0
@@ -222,19 +237,21 @@ def p_camera(alt, res):
     
     return np.round(candidates_p[np.argmin(candidates_m)], 3)
 #%%
-p_camera(250000, 1)
+#p_camera(250000, 1)
 #%%    
 def m_propulsion(alt, lifetime):
-    Isp = 3241
     fuel = "Xenon"
+    Isp = 3220
     V = 7550
     S = 0.1*0.1
     Cd = 1.08
     rho = Rho(alt/1000)
     drag = 0.5*rho*V**2*S*Cd
     
-    coeff1 = 1378.6251095743646
-    coeff2 = 1.507462522088801
+    coeff1, coeff2, R2 = linear_reg(e_thrusters["thrust (N)"], e_thrusters["mass (kg)"], 1)
+
+#    coeff1 = 1378.6251095743646
+#    coeff2 = 1.507462522088801
     m_thruster = coeff1*drag + coeff2
         
     m_prop = drag/(9.81*Isp)*(lifetime*24*60*60)
@@ -242,14 +259,33 @@ def m_propulsion(alt, lifetime):
     T = 293 #Kelvin
     P = 100E+5 #Pa
     prop_volume = m_prop*R_spec*T/P
-    outer_volume = prop_volume*1.3221
     m_tanks = 0.0063*(P/1E5)*(prop_volume*1000)
-
+#    print(m_prop, m_thruster)
     estimate = m_thruster + m_tanks
+#    print(coeff1, coeff2, R2)
     return np.round(estimate, 3)
 
 #%% 
-m_propulsion(250000, 180)
+#m_propulsion(250000, 180)
+#
+#x = tanks["PV"].values[:-3]
+#y = tanks["dry mass (kg)"].values[:-3]
+#
+#plt.figure()
+#slope, intercept, R2 = linear_reg(x, y, 0)
+##print(slope, intercept, R2 )
+#plot(x, 1.6*x*slope+intercept, "PV", "mass", "linear trend", "linreg test", "red")
+##plt.axhline(y=p_comms(250000, 1, 6000, 5),  color = "red", linestyle = "--", label = "power requirement")
+#plt.grid(which = "major", linewidth = 1) 
+#plt.minorticks_on()
+#plt.grid(which = "minor", linewidth = 0.2) 
+#plt.title("mass and PV of propellant tanks")
+#plt.xlabel("PV")
+#plt.ylabel("mass (kg)")
+#plt.scatter(x, y, label = "tanks", color = "black")
+#plt.legend()
+#
+
 #%%    
 def p_propulsion(alt, lifetime):
     x_var = e_thrusters["thrust (N)"]
@@ -263,11 +299,13 @@ def p_propulsion(alt, lifetime):
     drag = 0.5*rho*V**2*S*Cd
     thrust_req = drag
     p_req = thrust_req*ms+c
-#    print(thrust_req)
+#    print(ms, c, R2s)
     return np.round(p_req, 3)
 
 #%%
 p_propulsion(250000, 180)      
+
+
 #%%
 def m_GNC():
     m_GNC = np.min(db_GNC["mass (kg)"])
@@ -343,7 +381,7 @@ def p_comms(alt, res, fauche, pictures_per_orbit):
     p_req = 10**(p_req_dBW/10)
     return np.round(p_req, 3)
 #%%
-#p_comms(250000, 1, 6000, 5)
+p_comms(250000, 1, 6000, 5)
 #%%
 def m_comms(alt, res, fauche, pictures_per_orbit):
     k=0
@@ -358,12 +396,13 @@ def m_comms(alt, res, fauche, pictures_per_orbit):
     return np.round(min(candidates), 3) # pick the minimum transmitter which meets the reqs
 
 #%%
-#m_comms(250000, 1, 6000, 5)  
+m_comms(250000, 1, 6000, 5)  
+
 #%% 
 def m_thermal(total_mass, total_power):
-    
+    m_thermal = 0.017*total_mass
     m_thermal_prime = 0.00832*total_power #from the SMAD
-    return np.round(m_thermal_prime, 3)
+    return np.round(m_thermal, 3)
 
 
 #%%
@@ -389,6 +428,9 @@ def m_AOCS(alt, res, total_mass, fauche):
     ### Sizing Reaction Wheels sizing case: antenna pointing speed.
     x = np.linspace(-1000000, +1000000, 100)
     V = np.sqrt(3.986E5/(6371+alt/1000))
+    # from geometry derivitive of arctan(alt/x)
+    
+     ### Sizing Reaction Wheels sizing case: antenna pointing speed.
     slew_rate_for_antenna_pointing = (V/(alt/1000+((x**2)/alt/1000)))*180/(np.pi) # from geometry derivitive of arctan(alt/x)
     req_slew_rate = max(slew_rate_for_antenna_pointing)
     req_ang_acc = req_slew_rate/2
@@ -397,13 +439,16 @@ def m_AOCS(alt, res, total_mass, fauche):
     T_req = I*(req_ang_acc/180)*np.pi
     p_req = 125.63*T_req + 1.0205 #from Reaction Wheels.xlsx
     m_RW = p_req*0.1868 #from Reaction Wheels.xlsx
-    
+
     
     Sensors_mass = m_ST + m_SS + m_Gyro + m_RW
-#    print(m_ST, m_SS, m_Gyro, m_RW)
     return np.round(Sensors_mass, 3)
 #%%
-m_AOCS(250000,1,24.645,6000)
+#m_AOCS(250000,1,18,6000)
+
+
+
+#print(slope, intercept, R2)
 
 #%% Structure
 def m_str(total_mass):
@@ -580,6 +625,8 @@ def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
     guess_masses = np.zeros(50)
     total_masses = np.zeros(50)
     m_errors = np.zeros(50)
+    the_good_m_budget = 0
+    the_good_p_budget= 0
     
     k=0    
     for i in mass_guess_factors: 
@@ -588,13 +635,13 @@ def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
             the_good_m_budget = m_budget
             the_good_p_budget = p_budget
         k=k+1
-
+#        if budget == 0: continue
 
     return the_good_m_budget, the_good_p_budget
 
     
 #%%
-mass_budget, power_budget = mass_estimator(250000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
+mass_budget, power_budget = mass_estimator(236000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
 
 
 

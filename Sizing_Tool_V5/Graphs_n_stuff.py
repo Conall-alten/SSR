@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Sep 29 10:41:56 2023
+
+@author: cdepaor
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Mon Jun 19 09:41:45 2023
 
 @author: cdepaor
@@ -83,7 +90,7 @@ def linear_reg(x, y, intercept):
         sos = 0
         for i in x:
             Errors2 = Errors2 + (y_out(i, m_adj) - y[k])**2
-            sos = sos + (y_out(i, m_adj) - np.mean(y))**2
+            sos = sos + (y[k] - np.mean(y))**2
             R2 = 1 - Errors2/sos
             k=k+1
         ers.append(Errors2)
@@ -103,7 +110,7 @@ def polynomial_reg(x, y, intercept):
     else:
         c = curve[1]
     def y_out(x_in, m):
-        return x_in*m + c
+        return curve[0]*x_in**2 + curve[1]*x_in + m
     
     adj = m/100
     ers = []
@@ -117,7 +124,7 @@ def polynomial_reg(x, y, intercept):
         sos = 0
         for i in x:
             Errors2 = Errors2 + (y_out(i, m_adj) - y[k])**2
-            sos = sos + (y_out(i, m_adj) - np.mean(y))**2
+            sos = sos + (y[k] - np.mean(y))**2
             R2 = 1 - Errors2/sos
             k=k+1
         ers.append(Errors2)
@@ -223,6 +230,20 @@ def p_camera(alt, res):
     return np.round(candidates_p[np.argmin(candidates_m)], 3)
 #%%
 p_camera(250000, 1)
+x = cameras["alt/gsd"]
+y = cameras["power (W)"]
+plt.figure()
+plt.xlabel("alt/gsd")
+plt.xlabel("Power (W)")
+plt.grid(which = "major", color = "black", linewidth = 0.2)
+plt.grid(which = "minor", color = "black", linewidth = 0.1)
+mx, c, R2 = polynomial_reg(x, y, 0)
+plt.plot(x, (x**2)*mx + c, label = "polynomial trend", color = "red")
+plt.scatter(x, y, label = "cameras", color = "black")
+plt.scatter(0,0, label = "R2 = {}".format(R2), color = "white")
+plt.legend()
+
+
 #%%    
 def m_propulsion(alt, lifetime):
     Isp = 3241
@@ -263,7 +284,6 @@ def p_propulsion(alt, lifetime):
     drag = 0.5*rho*V**2*S*Cd
     thrust_req = drag
     p_req = thrust_req*ms+c
-#    print(thrust_req)
     return np.round(p_req, 3)
 
 #%%
@@ -397,13 +417,12 @@ def m_AOCS(alt, res, total_mass, fauche):
     T_req = I*(req_ang_acc/180)*np.pi
     p_req = 125.63*T_req + 1.0205 #from Reaction Wheels.xlsx
     m_RW = p_req*0.1868 #from Reaction Wheels.xlsx
-    
+
     
     Sensors_mass = m_ST + m_SS + m_Gyro + m_RW
-#    print(m_ST, m_SS, m_Gyro, m_RW)
     return np.round(Sensors_mass, 3)
 #%%
-m_AOCS(250000,1,24.645,6000)
+m_AOCS(250000,1,18,6000)
 
 #%% Structure
 def m_str(total_mass):
@@ -573,6 +592,29 @@ def iterator(alt, res, fauche, lifetime, pictures_per_orbit, mass_guess_factor):
 #%%
 iterator(250000, 1, 6000, 180, 5, 0.49)
 
+#%% the convergence monitor function
+def multiplot(x, y1, y2, y3, g_iter):
+
+    fig, axs = plt.subplots(2,1, sharex = True, squeeze=False)
+
+    axs[0,0].plot(x, y1)
+    axs[0,0].plot(x, y2)
+    axs[0,0].set_title("m_y")
+    axs[0,0].set_ylabel("mass [kg]")
+    axs[0,0].axvline(x=g_iter, color = "black", linestyle="--", linewidth = 0.8)
+    axs[0,0].grid(which = "major", color = "black", linewidth = 0.2)
+    axs[0,0].grid(which = "minor", color = "black", linewidth = 0.1)
+    
+    axs[1,0].plot(x, y3, color = "red")
+    axs[1,0].set_title("Epsilon")
+    axs[1,0].set_xlabel("Guess factor")
+    axs[1,0].set_ylabel("Error [kg]")
+    axs[1,0].axhline(y=0, color="black", linestyle="--", linewidth = 0.8)
+    axs[1,0].axvline(x=g_iter, color = "black", linestyle="--", linewidth = 0.8)
+    axs[1,0].grid(which = "major", color = "black", linewidth = 0.2)
+    axs[1,0].grid(which = "minor", color = "black", linewidth = 0.1)
+    axs.legend()
+
 #%%
 def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
     mass_guess_factors = np.linspace(0.2, 0.95, 50)
@@ -582,19 +624,27 @@ def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
     m_errors = np.zeros(50)
     
     k=0    
+    its = []
+
     for i in mass_guess_factors: 
         guess_masses[k], total_masses[k], m_errors[k], m_budget, total_power, p_charging, p_budget = iterator(alt, res, fauche, lifetime, pictures_per_orbit, i)
+        
+        its.append(k)
+        
         if  -1 < m_errors[k] < 1:
             the_good_m_budget = m_budget
             the_good_p_budget = p_budget
+            g_iter = i
         k=k+1
-
-
+    
+    multiplot(mass_guess_factors, guess_masses, total_masses, m_errors, g_iter)
+    #           x                   y1          y2              y3      y4
+    
     return the_good_m_budget, the_good_p_budget
 
     
 #%%
-mass_budget, power_budget = mass_estimator(250000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
+mass_budget, power_budget = mass_estimator(50000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
 
 
 
