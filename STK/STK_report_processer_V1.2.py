@@ -173,7 +173,7 @@ add = ""
 # Paramètres de la constellation 2
 
 orbit2 = "+SSO" # SSO toujours en deuxième position
-orbit2 = "\\SSO" # Si SSO est seule
+orbit2 = "\SSO" # Si SSO est seule
 sat2 = 2 # Nombre de satellites par plan
 plan2 = 15 # Nombre de plans
 inc2 = "50" # Inclinaison des orbites
@@ -213,7 +213,7 @@ folder3 = "\\resolution"
 #folder3 = "\\inclination"
 #folder3 = "\\link"
 #folder3 = "\\duration"
-#folder3 = ""
+folder3 = ""
 #folder3 = "IP_Spacing"
 
 #%% Type de rapport : Access AreaTarget to Satellite-Sensor or Chain

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Oct  8 01:50:18 2023
+Created on Thu Oct 26 17:12:47 2023
 
 @author: DECLINE
 """
@@ -660,7 +660,10 @@ elif folder2=="\\region":
         res_list.append(r)
         name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(r)+add1
         # Traitement du fichier csv
-        N = Nsat1*Nplan1
+        if name2=="":
+            Nsat2=0
+            Nplan2=0
+        N = Nsat1*Nplan1+Nsat2*Nplan2
         # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams
         # (changer si KeyError: "Start Time (UTCG)")
         # db est un DataFrame (sorte de tableau)
