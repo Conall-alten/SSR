@@ -17,7 +17,7 @@ res_NADIR = 0.825 # Résolution au sol de la caméra (exemple 1 mètre = cahier
 
 altitudes = [100, 180, 200, 220, 240, 250, 260, 300, 500, 800] # altitude
 altitudes = np.linspace(100, 500, 10)
-altitudes = [250]
+altitudes = [100]
 # Une couleur par altitude (plots)
 # colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'gold', 'cyan'] 
     
@@ -28,17 +28,17 @@ res_sol2 = np.linspace(1.6, 5, 5)
 res_sol3 = np.linspace(5, 10, 3)
 res_sol_tot = [res_sol1, res_sol2, res_sol3]
 
-res_sol1 = [2]
+res_sol1 = [6.189]
 res_sol_tot = [res_sol1]
 
 R = 6378         # Rayon de la Terre (km)
 
 g_ND = 0         # Booléen utilisé pour l'affichage de la distance ND en 
-                 # Fonction de l'angle
+                 # fonction de l'angle
 g_OD = 0         # Booléen utilisé pour l'affichage de la distance OD en
-                 # Fonction de l'angle
+                 # fonction de l'angle
 g_reso = 1       # Booléen utilisé pour l'affichage de la résolution au sol en
-                 # Fonction de l'angle
+                 # fonction de l'angle
 
 N = len(altitudes)
 deg = 4 # Degré des polynômes d'interpolation
@@ -68,7 +68,7 @@ def get_coeff(deg, res_sol_tot, altitudes, ang_list, h):
 
     return mymodel, myline, M
 
-# Pour toutes les altitudes
+# Pour chaque résolution, on fait varier l'altitude
 
 for rt in range(len(res_sol_tot)):
     for h in range(N):
@@ -79,14 +79,12 @@ for rt in range(len(res_sol_tot)):
         D_THETA = np.rad2deg(d_theta) # Résolution angulaire au nadir en degrés
         
         theta = np.deg2rad(np.arange(1, 90, D_THETA)) # Discrétisation du champ
-                                                    # de vue (theta) en radians
+                                                      # de vue en radians
                                               
-        THETA = np.rad2deg(theta) # Discrétisation du champ de vue (theta) en 
-                                  # degrés
+        THETA = np.rad2deg(theta) # Discrétisation du champ de vue en degrés
         
         OD_simple = altitudes[h]/np.cos(theta) # Calcul approximatif de la 
         # distance OD (sans prise en compte de la courbure de la Terre)
-        
         ND_simple = altitudes[h]*np.tan(theta) # Calcul approximatif de la 
         # distance ND (sans prise en compte de la courbure de la Terre)
     
@@ -198,3 +196,10 @@ for rt in range(len(res_sol_tot)):
         plt.xlabel('Puissance de x')
         plt.ylabel('k = $C/x^n$')
         plt.legend()
+        
+print("Résultat en degrés :",ang_list)
+print("Résolution entre", res_THETA[i-1], "et", res_THETA[i],
+      "m pour un angle de", THETA[i-1], "-",THETA[i],
+      "degrés, à l'altitude",altitudes[h])
+print("Moyenne de", (res_THETA[i-1]+res_THETA[i])/2,"m à",
+      (THETA[i-1]+THETA[i])/2,"°")

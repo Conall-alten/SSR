@@ -29,29 +29,29 @@ g_reso = 1    # booléen utilisé pour l'affichage de la résolution au sol en
 cc = -1 # compteur
 
 altitudes = [100] # test d'une ou plusieurs altitudes du satellite
-
-for h in altitudes:
+N = len(altitudes)
+for h in range(N):
     res_list = []
     for ang in angle:
-        
         cc += 1
-    
-        d_theta = res_NADIR/h # résolution angulaire au NADIR en radians
-        D_THETA = np.rad2deg(d_theta) # résolution angulaire au NADIR en degrés
+        d_theta = res_NADIR/altitudes[h] # Résolution angulaire au nadir en 
+                                         # radians
+        D_THETA = np.rad2deg(d_theta) # Résolution angulaire au nadir en degrés
         
-        theta = np.arange(1, 90, D_THETA) # discrétisation du champ de vue (théta) en radians
-        THETA = np.rad2deg(theta)         # discrétisation du champ de vue 
-                                          # (théta) en degrés
+        theta = np.deg2rad(np.arange(1, ang+1, D_THETA)) # Discrétisation du champ
+                                                         # de vue en radians
+                                              
+        THETA = np.rad2deg(theta) # Discrétisation du champ de vue en degrés
         
-        OD_simple = h/np.cos(theta) # calcul approximatif de la distance OD (sans
+        OD_simple = altitudes[h]/np.cos(theta) # calcul approximatif de la distance OD (sans
                                     # prise en compte de la courbure de la Terre)
-        ND_simple = h*np.tan(theta) # calcul approximatif de la distance ND (sans 
+        ND_simple = altitudes[h]*np.tan(theta) # calcul approximatif de la distance ND (sans 
                                     # prise en compte de la courbure de la Terre)
     
         # coefficients du polynôme de degré 2 et calcul du déterminant delta
         a = 1+1/np.tan(theta)**2
         b = -2*(R+h)/np.tan(theta)
-        c = h*(h+2*R)
+        c = altitudes[h]*(altitudes[h]+2*R)
         delta = b**2-4*a*c
     
         xDp = (-b+np.sqrt(delta))/(2*a) # racine du polynôme à rejeter
@@ -65,26 +65,26 @@ for h in altitudes:
     
         res_THETA = (np.diff(xD)**2+np.diff(yD)**2)**0.5  # résolution au sol en 
                                                           # mètres
-        res_THETA_theorique = res_NADIR/np.cos(theta)**2  # equation qui ne 
+        res_THETA_theorique = res_NADIR/np.cos(theta)**2  # équation qui ne 
         # prend pas en compte la courbure de la Terre
     
         if g_ND:
-            plt.plot(THETA, ND, label=r"altitude h={0} km".format(h))
+            plt.plot(THETA, ND, label=r"altitude h={0} km".format(altitudes[h]))
             clr = plt.gca().get_children()[2*cc].get_color()
             #plt.plot(THETA, ND_simple, linestyle='dotted', color=clr, 
             #label="calcul simple")
             plt.plot(THETA, ND_simple, linestyle='dotted', color=clr)
     
         if g_OD:
-            plt.plot(THETA, OD, label=r"altitude h={0} km".format(h))
-            clr = plt.gca().get_children()[2 * cc].get_color()
+            plt.plot(THETA, OD, label=r"altitude h={0} km".format(altitudes[h]))
+            clr = plt.gca().get_children()[2*cc].get_color()
             #plt.plot(THETA, OD_simple, linestyle='dotted', color=clr, label=
             #"calcul simple")
             plt.plot(THETA, OD_simple, linestyle='dotted', color=clr)
     
         if g_reso:
             if ang==angle[0]:
-                plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(h))
+                plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(altitudes[h]))
             else:
                 plt.plot(THETA[:-1], res_THETA)
             plt.grid()
@@ -95,17 +95,17 @@ for h in altitudes:
             plt.legend()
             plt.show()
         
-        e = 0.001    
+        e = 0.01
         i = 0
         while ang - THETA[i] > e :
             i = i + 1
-            #print("Résolutions :", res_THETA[i], "et angles de", THETA[i],
-            #"degrés")
+            # print("Résolutions :", res_THETA[i], "et angles de", THETA[i],
+            # "degrés")
         res_list.append((res_THETA[i-1]+res_THETA[i])/2)
     
         print("Résolution entre", res_THETA[i-1], "et", res_THETA[i],
               "m pour un angle de", THETA[i-1], "-",THETA[i],
-              "degrés, à l'altitude",h)
+              "degrés, à l'altitude",altitudes[h])
         print("Moyenne de", (res_THETA[i-1]+res_THETA[i])/2,"m à",
               (THETA[i-1]+THETA[i])/2,"°")
     
