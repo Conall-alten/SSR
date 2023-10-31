@@ -138,7 +138,7 @@ class Interface:
         liste_Type2 = ["+RCO","+SSO","+CITROUILLE"]
         #frame const simple
         self.FRAME_const_simple = tk.Frame(self.window)
-        self.FRAME_const_simple.grid(row=2,column=5,rowspan=8,columnspan=2)
+        #self.FRAME_const_simple.grid(row=2,column=5,rowspan=8,columnspan=2)
         
         self.TITRE_Frame_const_simple = tk.Label(self.FRAME_const_simple,text="Constellation principale")
         self.TITRE_Frame_const_simple.grid(row=0,column=0,columnspan=2)
