@@ -7,6 +7,7 @@ Created on Wed Jul  5 15:47:44 2023
 
 import pandas as pd
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 
@@ -74,7 +75,7 @@ def lecture(folder1, folder2, folder3, name):
     folder1 = "\\conflict_rostov"
     folder2 = "\\FoM_points"
     folder3 = "\\resolution"
-    path = r"C:\Users\DECLINE\Desktop\logiciels\python\stk"+folder1+folder2+folder3+name+".csv"
+    path = os.path.dirname(__file__)+'/../'+folder1+folder2+folder3+name+".csv"
     try:
         db = pd.read_csv(path, delimiter=",")
     except:

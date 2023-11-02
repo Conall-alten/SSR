@@ -6,12 +6,12 @@ Created on Wed May 10 01:58:09 2023
 """
 
 from turtle import *
-
+import os
 #%% for txt files
 
 num = 0
 files = ['Villes_Ukraine','Luhansk_city','Swath_260_2.5_1_long','ConflictRostov','France','Launch','Outremer','UkraineEast','Bryansk','Kursk','Belgorod','RostovDon','crimea','zaporizhia','kherson','donetsk','luhansk','conflict','ukraine'] 
-with open(files[num]+'.txt', "r+") as file:
+with open(os.path.dirname(__file__)+'/../'+files[num]+'.txt', "r+") as file:
     data = file.read()
     
     data = data.replace(",","")
@@ -22,7 +22,8 @@ with open(files[num]+'.txt', "r+") as file:
     
     print(data)
     
-with open(files[num]+'.at', "w") as file:
+with open(os.path.dirname(__file__)+'/../'+files[num]+'.at', "w") as file:
+    print("FOO TEST")
     file.write(str(data))
 
 #%% Squares and rectangles areas

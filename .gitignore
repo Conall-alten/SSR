@@ -2,3 +2,4 @@
 *.png
 target_primary/
 target_secondary/
+__pycache__/
