@@ -277,7 +277,7 @@ folder1 = interface.folder1
 folder2 = interface.folder2
 folder3=""
 
-path = path_user+folder1+folder2
+path = path_user+"/"+folder1+"/"+folder2
 
 
 #%% Type de rapport : Access AreaTarget to Satellite-Sensor or Chain
@@ -491,7 +491,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
     plt.xlabel("Longitude (deg)")
     plt.ylabel("Latitude (deg)")
     plt.legend()
-    fig2.savefig(path+"\map"+name1+name2+"_map.png", dpi=300,
+    fig2.savefig(path+"\\map"+name1+name2+"_map.png", dpi=300,
                   pad_inches=0)
     
     # Règle des RCO
