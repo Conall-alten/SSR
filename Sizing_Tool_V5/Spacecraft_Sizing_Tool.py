@@ -97,7 +97,7 @@ def linear_reg(x, y, intercept):
     
     
     return m_q, c, R_squared # returns the slope of the line, the y-intercept and the R2
-#%% linreg Test
+#%% ### linreg Test ###
 #x = ST["kg"].values[:-3]
 #y = ST["W"].values[:-3]
 #
@@ -142,7 +142,7 @@ def polynomial_reg(x, y, intercept):
     
     return m_q, c, R_squared # returns the coefficient of  x2 ,the y-intercept, and the R2
 
-#%% polynomial_reg test
+#%% ### polynomial_reg test ###
 #x = np.array(cameras["mass (kg)"])
 #y = np.array(cameras["alt/gsd"])
 #coeffs = polynomial_reg(y, x, 2)
@@ -154,7 +154,7 @@ def polynomial_reg(x, y, intercept):
 #print(coeffs)
 
 
-#%%
+#%% ### fitting an exponential curve to ###
 def exp_reg(x, y):
     var = 0
     x_pred = np.linspace(0,800000, len(y))
@@ -190,7 +190,7 @@ def exp_reg(x, y):
     return le_bon_var, le_bon_R2
 #    return q
     
-#%% scipyfit
+#%% ### regression using the scipy library ###
 def func(x, A, B):
         y = A*x**2+B*x
         return y
@@ -199,32 +199,31 @@ def scifit(X, Y):
     parameters, covariance = sc.curve_fit(func, X, Y)
     return parameters, covariance
 
-#%% half power beamwidth
+#%% ### half power beamwidth for communication subsystem ###
 def HPBW(gain):
     return 70/gain
-#%%
-AA = []
-gains = range(1,100)
-for i in gains:
-    AA.append(HPBW(i))
-
-#%%
+#%% ### Atmospheric Desnity model ###
 def Rho(alt):
     return 1000*(5887.705297*alt**(-7.016396641)) #grace a Charles BST SSR V01
     
-
+#%% ### molar masses of different fuels kg/mol ###
 molars = {
-        "Xenon": 0.13125, # molar masses of different fuels kg/mol
+        "Xenon": 0.13125, 
         "Krypton": 0.083798,
         "Water": 0.0180153}
 #%%
+ #############################################################################
+ ### Subsystem Sizing Functions ##############################################
+ #############################################################################
+#%%  Payload mass
 def m_camera(alt, res):
     coeff, intercept, R2 = polynomial_reg(cameras["alt/gsd"], cameras["mass (kg)"], 0)
     m_camera = (1/2.314)*coeff*(alt/res)**2
     return np.round(m_camera, 3)
-#%%
+#%% Payload test
 #m_camera(250000, 1)
-#%%
+    
+#%% Payload power
 def p_camera(alt, res):
     k=0
     candidates_m = []
@@ -236,9 +235,10 @@ def p_camera(alt, res):
         k=k+1
     
     return np.round(candidates_p[np.argmin(candidates_m)], 3)
-#%%
+#%% Payload power test
 #p_camera(250000, 1)
-#%%    
+    
+#%% Propulsion mass
 def m_propulsion(alt, lifetime):
     fuel = "Xenon"
     Isp = 3220
@@ -265,9 +265,10 @@ def m_propulsion(alt, lifetime):
 #    print(coeff1, coeff2, R2)
     return np.round(estimate, 3)
 
-#%% 
+#%% Propulsion mass test
 #m_propulsion(250000, 180)
 #
+#%% Plotting Propellant tank correlations
 #x = tanks["PV"].values[:-3]
 #y = tanks["dry mass (kg)"].values[:-3]
 #
@@ -286,7 +287,7 @@ def m_propulsion(alt, lifetime):
 #plt.legend()
 #
 
-#%%    
+#%% Propulsion power
 def p_propulsion(alt, lifetime):
     x_var = e_thrusters["thrust (N)"]
     y_var = e_thrusters["power (W)"]
@@ -302,23 +303,23 @@ def p_propulsion(alt, lifetime):
 #    print(ms, c, R2s)
     return np.round(p_req, 3)
 
-#%%
-p_propulsion(250000, 180)      
+#%% Propulsion power test
+#p_propulsion(250000, 180)      
 
 
-#%%
+#%% GNC/GNSS mass
 def m_GNC():
     m_GNC = np.min(db_GNC["mass (kg)"])
     return np.round(m_GNC, 3)
-#%%
+#%% GNC/GNSS mass test
 #m_GNC()
     
-#%%
+#%% GNC power
 def p_GNC():
     return np.round(db_GNC["power (W)"][np.argmin(db_GNC["mass (kg)"])], 3)
-#%%
+#%% GNC power test
 #p_GNC()
-#%%
+#%% On-Board Data Handling mass
 def m_OBDH(res, fauche, pictures_per_orbit):
     photo_size = (fauche/res)*(fauche/res)*24
     dataload_per_orbit = pictures_per_orbit*photo_size/1E9 #Gigabits
@@ -334,18 +335,18 @@ def m_OBDH(res, fauche, pictures_per_orbit):
     avg_mass = sumass/count
     return np.round(avg_mass, 3)
 
-#%%
+#%% OBDH mass test
 #m_OBDH(1, 6000, 5) 
-#%%
+#%% OBDH power
 def p_OBDH(res, fauche):
     slope, intercept, R = linear_reg(CPUs["mass (kg)"][:-1], CPUs["power (W)"][:-1], 1) #finding sizing rule
     mass_OBDH = m_OBDH(1, 6000, 5)
     
     p_OBDH = mass_OBDH*slope + intercept
     return np.round(p_OBDH, 3)
-#%%
+#%% OBDH power test
 #p_OBDH(1, 6000)
-#%%
+#%% communications power
 def p_comms(alt, res, fauche, pictures_per_orbit):
 #    alt = alt/1000
     photo_size = (fauche/res)*(fauche/res)*24 # 24 bits/pixel
@@ -380,9 +381,9 @@ def p_comms(alt, res, fauche, pictures_per_orbit):
     
     p_req = 10**(p_req_dBW/10)
     return np.round(p_req, 3)
-#%%
+#%% communications power test
 p_comms(250000, 1, 6000, 5)
-#%%
+#%% communications mass
 def m_comms(alt, res, fauche, pictures_per_orbit):
     k=0
     candidates = []
@@ -395,19 +396,19 @@ def m_comms(alt, res, fauche, pictures_per_orbit):
         
     return np.round(min(candidates), 3) # pick the minimum transmitter which meets the reqs
 
-#%%
+#%% comms mass test
 m_comms(250000, 1, 6000, 5)  
 
-#%% 
+#%% thermal subsystem mass
 def m_thermal(total_mass, total_power):
     m_thermal = 0.017*total_mass
     m_thermal_prime = 0.00832*total_power #from the SMAD
     return np.round(m_thermal, 3)
 
 
-#%%
+#%% thermal subsystem mass test
 #m_thermal(18, 191)
-#%%
+#%% Attitude orbit and control system mass
 def m_AOCS(alt, res, total_mass, fauche):
     stability_req = 0.2*np.arctan((0.5*fauche)/(alt))*3600
     dbST = pd.read_csv("Star_Trackers.csv")
@@ -443,22 +444,18 @@ def m_AOCS(alt, res, total_mass, fauche):
     
     Sensors_mass = m_ST + m_SS + m_Gyro + m_RW
     return np.round(Sensors_mass, 3)
-#%%
+#%% AOCS mass test
 #m_AOCS(250000,1,18,6000)
 
-
-
-#print(slope, intercept, R2)
-
-#%% Structure
+#%% Structure mass
 def m_str(total_mass):
     
     m_str = 0.217*total_mass #from the SMAD
     return np.round(m_str, 3)
     
-#%%    
-m_str(20)
-#%%
+#%% Structure mass test
+#m_str(20)
+#%% Attitude Orbit and Control System power
 def p_AOCS(alt, res, total_mass, fauche):
     stability_req = 0.2*np.arctan((0.5*fauche)/(alt))*3600 # pointing acc of camera
     k=0
@@ -487,9 +484,9 @@ def p_AOCS(alt, res, total_mass, fauche):
 
     p_AOCS = p_ST + p_SS + p_Gyro + p_RW
     return np.round(p_AOCS, 3)
-#%%
-p_AOCS(250000, 1, 20, 6000)
-#%%
+#%% Attitude Orbit and Control System power test
+#p_AOCS(250000, 1, 20, 6000)
+#%% power subsystem mass 
 def m_power(alt, total_power, return_mp):
     v_req = 28
     p_req = total_power
@@ -546,9 +543,9 @@ def m_power(alt, total_power, return_mp):
         return np.round(charging_power, 3)
     
     
-#%%
+#%% power subsystem mass test
 m_power(250000,191, 1)
-#%% Iterative mass section
+#%% Inner Iterative sizing
 def iterator(alt, res, fauche, lifetime, pictures_per_orbit, mass_guess_factor):
     ## Bottom up sizing ##
     mass_comms = m_comms(alt, res, fauche, pictures_per_orbit)
@@ -615,10 +612,10 @@ def iterator(alt, res, fauche, lifetime, pictures_per_orbit, mass_guess_factor):
    
     
     return np.round(guess_mass, 3), np.round(total_mass, 3), np.round(m_error, 3), mass_breakdown, np.round(total_power, 3), np.round(charging_power, 3), power_breakdown
-#%%
-iterator(250000, 1, 6000, 180, 5, 0.49)
+#%% Iterative sizing test
+#iterator(250000, 1, 6000, 180, 5, 0.49)
 
-#%%
+#%% ### Outer Iterative sizing algorithm ###
 def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
     mass_guess_factors = np.linspace(0.2, 0.95, 50)
 
@@ -640,17 +637,8 @@ def mass_estimator(alt, res, fauche, lifetime, pictures_per_orbit):
     return the_good_m_budget, the_good_p_budget
 
     
-#%%
-mass_budget, power_budget = mass_estimator(236000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
-
-
-
-
-
-
-
-
-
+#%% ### Outer Iterative sizing algorithm test
+#mass_budget, power_budget = mass_estimator(236000, 1, 6000, 180, 5) #(alt, res, fauche, durée de vie, photos per orbit)
 
 
 
