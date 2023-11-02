@@ -1,8 +1,10 @@
+
 import tkinter as tk
 from tkinter import ttk
 import Spacecraft_Sizing_Tool as SST
 import numpy as np
 
+#%%  setting up GUI
 def process_input():
     input_text = [input_boxes[i].get("1.0", "end-1c") for i in range(5)]
     alt = float(input_text[0]) * 1000
@@ -11,7 +13,7 @@ def process_input():
     ddv = float(input_text[3])
     ppo = float(input_text[4])
 
-    # Perform some processing using the input_text variables
+    # Perform mass sizing
     mass_budget, power_budget = SST.mass_estimator(alt, res, fauche, ddv, ppo)
     mtotal = mass_budget["total         [kg]"]
     mAOCS = mass_budget["AOCS          [kg]"] 
@@ -24,6 +26,7 @@ def process_input():
     mStructure = mass_budget["Structure     [kg]"]
     mThermal = mass_budget["Thermal       [kg]"]
 
+    # Perform power sizing
     ptotal = np.round(power_budget["total         [W]"], 3)
     pAOCS = power_budget["AOCS          [W]"] 
     ppayload = power_budget["Camera        [W]"]
@@ -35,9 +38,11 @@ def process_input():
     pStructure = power_budget["Structure     [W]"]
     pThermal = power_budget["Thermal       [W]"]
 
+    #output array
     output_text = [mtotal, mAOCS, mpayload, mcomms, mGNC, mOBDH, mPower, mPropulsion, mStructure, mThermal,
                    ptotal, pAOCS, ppayload, pcomms, pGNC, pOBDH, pPower, pPropulsion, pStructure, pThermal]
 
+    #Putting the outputs to the boxes in the GUI
     for i in range(20):
         output_boxes[i].delete("1.0", "end")
         output_boxes[i].insert("1.0", output_text[i])
@@ -72,7 +77,7 @@ for i in range(20):
     output_box.grid(row=row_index + 1, column=col_index, columnspan=2, padx=5, pady=5, sticky= "W")
     output_boxes.append(output_box)
 
-# Additional text labels in dark grey
+# Additional text labels in dark grey beside the input boxes
 additional_text_1 = tk.Label(root, text="Baseline: [250] -  Range: [100, 1610]", fg="grey")
 additional_text_2 = tk.Label(root, text="Baseline: [1] -    Range: [0.36, 1.65]", fg="grey")
 additional_text_3 = tk.Label(root, text="Baseline: [6000] - Range: [1, 16700]", fg="grey")
