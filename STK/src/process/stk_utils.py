@@ -10,14 +10,15 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-
 def indice_max(liste):
-    """Indice du maximum d'une liste"""
+    """Indice du maximum d'une liste
+    """
     return liste.index(max(liste))
 
 
 def indice_min(liste):
-    """Indice du minimum d'une liste"""
+    """Indice du minimum d'une liste
+    """
     return liste.index(min(liste))
 
 
@@ -33,6 +34,7 @@ def moy_non_null(liste):
         new_revisit_times : liste mais sans les éléments nuls.
 
     """
+    print("XX XX XX")
     new_revisit_times = [] # Secondes
     minutes = []
     n = 0

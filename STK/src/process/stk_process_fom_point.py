@@ -8,27 +8,46 @@ Created on _
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from stk_utils import *
+from src.process.stk_utils import * 
 from sklearn.metrics import r2_score
 
 
-def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, alt1, IPS1, r, add1):
-    if name2=="":
-        Nsat2=0
-        Nplan2=0
+def process_fom_point(path, const1, const2):
     
-    N = Nsat1*Nplan1+Nsat2*Nplan2
+    Donetsk = [37.805, 48.003]
+    Kherson = [32.611, 46.634]
+    Luhansk = [39.303, 48.567]
+    RostovDon = [39.7, 47.24]
+    Sevastopol = [33.5225, 44.605]
+    Zaporizhzhia = [35.1175, 47.85]
+
+    # Ordre alphabétique !!!
+    targets = [Donetsk, 
+            Kherson, 
+            Luhansk, 
+            RostovDon, 
+            Sevastopol, 
+            Zaporizhzhia]
+    
+    name = str(const1)
+    if const2 :
+        name = name + "_" + str(const2)
+    
+    N = const1.nb_sat()
+    if const2 :
+        N = N + const2.nb_sat()
+
     # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time (UTCG)")
-    db = pd.read_csv(path+folder3+name1+name2+".csv",skiprows=25+N,sep=",")
+    db = pd.read_csv(path + "/" + name +".csv",skiprows=25+N,sep=",")
     revisit_times = []
     lat = []
-    long = []
+    lon = []
     for i in range(0, len(db)):
         try:
             if db.iloc[i, 2]<20000:
                 revisit_times.append(db.iloc[i, 2]) # 3e colonne : revisite
                 lat.append(db.iloc[i, 0])
-                long.append(db.iloc[i, 1])
+                lon.append(db.iloc[i, 1])
             
         except:
             break
@@ -50,9 +69,6 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
         revisit_times_moy_sec.append(i/60)
     fig1 = plt.figure()
     # Affiche la corrélation et l'équation
-    # plt.plot(myline, mymodel(myline))
-    # plt.text(12, 60, mymodel)
-    # plt.text(12, 55, '{:.5f}'.format(r2_score(minutes, mymodel(lat))))
     plt.scatter(lat_reduite, revisit_times_moy_sec, s=10)
     plt.minorticks_on()
     plt.grid(True, which="major", color="k", linestyle="-")
@@ -60,13 +76,11 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
               alpha=0.2)
     
     # Corrélation et équation polynomiale
-    # plt.title("Revisit time, 1 week, avg = "+minsec(avg)+" s\n"+str(mymodel)+", R = "+str(
-    #         "{:.5f}".format(r2_score(minutes, mymodel(lat)))))
     
-    plt.title(name1+", avg = "+minsec(avg))
+    plt.title(name +", avg = "+minsec(avg))
     plt.xlabel("Latitude (deg)")
     plt.ylabel("Revisit time (min)")
-    fig1.savefig("/"join(path, name1 + name2) + ".png", dpi=300, pad_inches=0)
+    fig1.savefig("/".join((path, name)) + ".png", dpi=300, pad_inches=0)
     
     # Affiche la zone cible et les latitudes remarquables.
     
@@ -74,18 +88,15 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
     plt.title("Best = "+minsec(minutes[ind_min])+", worst = " 
               +minsec(minutes[ind_max])+", avg = "+ minsec(avg))
     plt.minorticks_on()   
-    plt.scatter(long, lat, s=10)
+    plt.scatter(lon, lat, s=10)
     
     # Affiche les villes
-    plt.scatter(Donetsk[0], Donetsk[1], c='k', s=50)
-    plt.scatter(Kherson[0], Kherson[1], c='k', s=50)
-    plt.scatter(Luhansk[0], Luhansk[1], c='k', s=50)
-    plt.scatter(Zaporizhzhia[0], Zaporizhzhia[1], c = 'k', s = 50)
-    plt.scatter(Sevastopol[0], Sevastopol[1], c = 'k', s = 50)
+    for t in targets :
+        plt.scatter(t[0], t[1], c='k', s=50)
     
     # Affiche les latitudes de l'inclinaison orbitale, de la pire et de la 
     # meilleure revisite.
-    plt.axhline(y=int(inc1), c='k', label='inclination', linewidth=4, linestyle="--")
+    plt.axhline(y=int(const1.inc), c='k', label='inclination', linewidth=4, linestyle="--")
     plt.axhline(y=lat[ind_max], c='r', label='maximum', linewidth=4)
     plt.axhline(y=lat[ind_min], c='g', label='minimum', linewidth=4)
     
@@ -95,7 +106,7 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
     plt.xlabel("Longitude (deg)")
     plt.ylabel("Latitude (deg)")
     plt.legend()
-    fig2.savefig("/".join(path, "map", name1 + name2 + "_map.png"), dpi=300,
+    fig2.savefig("/".join((path, "map", name + "_map.png")), dpi=300,
                   pad_inches=0)
     
     # Règle des RCO
@@ -126,7 +137,7 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
     ############################# Résolution #################################
     
     try:
-        #alt = [100, 180, 260, 300, 400, 500, 800]
+        alt = [100, 180, 260, 300, 400, 500, 800]
         deg = 5
         M = np.zeros((len(alt), deg+1))
         #alt = [100]
@@ -147,25 +158,24 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
             for r1 in res:
                 for r2 in r1:
                     res_list.append(r2)
-                    name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(a)+"_"+str(IPS1)+"_"+str(r2)+add1
-                    print(name1)
-                    N = Nsat1*Nplan1
+                    
+                    name_res = const1.name_with_res(r2)
+
+                    N = const1.nb_sat()
+   
                     # Le délimiteur peut être , ou ; (changer si KeyError)
-                    db = pd.read_csv(path+folder3+name1+name2+".csv", 
+                    db = pd.read_csv(path + "/" + name_res + ".csv", 
                                       skiprows=25+N, delimiter=",") # 25 correspond au
                     # format du rapport STK
                     
-                    #db_sorted = db.sort_values(by = ("Latitude (deg)"))
-            
-                    
                     revisit_times = np.zeros(len(db))
                     lat = np.zeros(len(db))
-                    long = np.zeros(len(db))
+                    lon = np.zeros(len(db))
                     for i in range(0, len(db)):
                         try:
                             revisit_times[i] = db.iloc[i, 2]
                             lat[i] = db.iloc[i, 0]
-                            long[i] = db.iloc[i, 1]
+                            lon[i] = db.iloc[i, 1]
                         except:
                             break
                         
@@ -183,23 +193,14 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
                     # période donnée
                     #print(str(int(avg))+" min "+str(round(60*(avg-int(avg)), 0))+" s")
             
-                    maxi = revisit_times_non_null[0]
-                    indice_max = 0
-                    mini = revisit_times_non_null[0]
-                    indice_min = 0
-                    for i in range(len(revisit_times_non_null)):
-                        if revisit_times_non_null[i]>=maxi:
-                            maxi = revisit_times_non_null[i]
-                            indice_max = i
-                        if revisit_times_non_null[i]<=mini:
-                            mini = revisit_times_non_null[i]
-                            indice_min = i
+                    id_max = indice_max(revisit_times_non_null)
+                    id_min = indice_min(revisit_times_non_null)
                             
-                    lat_diff_min.append(abs(float(inc1)-lat[indice_min]))
-                    lat_diff_max.append(abs(float(inc1)-lat[indice_max]))
-                    print(inc1)
-                    print(lat[indice_max])
-                    print(abs(float(inc1)-lat[indice_max]))
+                    lat_diff_min.append(abs(float(const1.inc)-lat[id_min]))
+                    lat_diff_max.append(abs(float(const1.inc)-lat[id_max]))
+                    print(const1.inc)
+                    print(lat[id_max])
+                    print(abs(float(const1.inc)-lat[id_max]))
                     
                     
                     mymodel = np.poly1d(np.polyfit(res_list, lat_diff_min, deg))
@@ -211,16 +212,12 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
                 print("coeff",str(m),"=", mymodel[m], ", cc2 =", c)
                 M[c][m]=mymodel[m]
                 print("r2",r2_score(lat_diff_min, mymodel(res_list)))
-            #plt.plot(myline, mymodel(myline), linestyle=':', c=colors[c])
                 
             # Changer le nom des fichiers cible (la liste res) et l'altitude    
-            
-            #plt.plot(res_list, lat_diff_min, marker="o", 
-            #          label="Inc - best at "+str(a)+"km", c=colors[c])
             plt.plot(res_list, lat_diff_max, marker="o", 
                        label="Inc - worst at "+str(a)+"km", c=colors[c], 
                        linestyle='--')
-            plt.title("Difference in latitude at "+str(inc1)+"°")
+            plt.title("Difference in latitude at "+str(const1.inc)+"°")
             plt.xlabel("Resolution (m)")
             plt.ylabel("Latitude (deg)")
             # plt.xlim(0)
@@ -228,12 +225,12 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
         plt.minorticks_on()
         plt.grid(True, which="major", color="k", linestyle="-")
         plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
-        fig3.savefig(path+folder3+"\loi\\"+str(inc1)+"_loi.png", 
+        fig3.savefig(path+"/loi/"+str(const1.inc)+"_loi.png", 
                       dpi=300, pad_inches=0)
         fig4=plt.figure()
         # Coefficient des polynômes pour chaque degré en fonction de l'altitude
         plt.plot(M, alt) 
-        fig4.savefig(path+folder3+"\coefficients"+name1+name2+"_coeff.png", 
+        fig4.savefig("/".join((path, "coefficients", name_res))+"_coeff.png", 
                       dpi=300, pad_inches=0)
     except:
         print("Pas d'autres fichiers similaires")
@@ -242,15 +239,8 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
     ################################ IPS #####################################
     
     try:
-        
-        const1 = "\SSO"
-        Nsat1 = 2 # Nombre de satellites par plan
-        Nplan1 = 12 # Nombre de plans
-        inc1 = "0" # Inclinaison des orbites (0° par convention pour une SSO)
-        alt1 = 250 # Altitude (km)
-        res1 = 2.0
     
-        IPS = [i for i in range(Nplan1)] # IPS (compose le nom de fichiers existants)
+        IPS = [i for i in range(const1.nplan)] # IPS (compose le nom de fichiers existants)
     
         colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'c', 'gold', 'yellowgreen', 'navy', 'darkturquoise'] # Une couleur par IPS
         fig3 = plt.figure(dpi=200)
@@ -259,25 +249,20 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
         for ips in IPS:
             c+=1
             ips_list.append(ips)
-            name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(ips)+"_"+str(res1)+add1
-            name = name1+name2
-            print(name)
-            if name2=="":
-                Nsat2 = 0
-                Nplan2 = 0
-            N = Nsat1*Nplan1+Nsat2*Nplan2
+            name = const1.name_with_ips(ips)
+            N = const1.nb_sat()
             
-            db = pd.read_csv(path+folder3+name+".csv", 
+            db = pd.read_csv(path + "/" + name + ".csv", 
                               skiprows=25+N, delimiter=",") # 25 correspond au
             # format du rapport STK
             revisit_times = np.zeros(len(db))
             lat = np.zeros(len(db))
-            long = np.zeros(len(db))
+            lon = np.zeros(len(db))
             for i in range(0, len(db)):
                 try:
                     revisit_times[i] = db.iloc[i, 2]
                     lat[i] = db.iloc[i, 0]
-                    long[i] = db.iloc[i, 1]
+                    lon[i] = db.iloc[i, 1]
                 except:
                     break
     
@@ -286,7 +271,7 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
             plt.plot(ips_list[ips], avg, marker="o", 
                        label="IPS="+str(ips), c=colors[c], 
                        linestyle='--')
-        plt.title("Revisite en fonction de l'IPS à "+str(Nplan1)+" plans")
+        plt.title("Revisite en fonction de l'IPS à "+str(const1.nplan)+" plans")
         plt.xlabel("IPS")
         plt.ylabel("Revisite (min)")
         # plt.xlim(0)
@@ -294,7 +279,7 @@ def process_fom_point(path, name1, name2, Nsat1, Nplan1, Nsat2, Nplan2, inc1, al
         plt.minorticks_on()
         plt.grid(True, which="major", color="k", linestyle="-")
         plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
-        fig3.savefig(path+"\IPS\\"+const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_ips_"+str(res1)+add1+".png", 
+        fig3.savefig(path + "/IPS/" + const1.name_with_ips("ips") + ".png", 
                           dpi=300, pad_inches=0)
     except:
         print("Pas d'autres fichiers similaires")
