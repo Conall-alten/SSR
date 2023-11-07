@@ -19,13 +19,6 @@ angle = [66.5] # Angle maximum souhaité
 
 R = 6378      # rayon de la Terre (km)
 
-g_ND = 0      # booléen utilisé pour l'affichage de la distance ND e fonction 
-              # de l'angle
-g_OD = 0      # booléen utilisé pour l'affichage de la distance OD en fonction 
-              # de l'angle
-g_reso = 1    # booléen utilisé pour l'affichage de la résolution au sol en 
-              # fonction de l'angle
-
 cc = -1 # compteur
 
 altitudes = [100] # test d'une ou plusieurs altitudes du satellite
@@ -60,40 +53,22 @@ for h in range(N):
         xD = xDm                   # coordonnée x du point au sol D
         yD = np.sqrt(R**2 - xD**2) # coordonnée y du point au sol D
     
-        OD = np.sqrt(xD**2+(R+h-yD)**2)     # distance capteur - cible
-        ND = np.sqrt((R-yD)**2+xD**2)   # distance Nadir - cible
-    
         res_THETA = (np.diff(xD)**2+np.diff(yD)**2)**0.5  # résolution au sol en 
                                                           # mètres
         res_THETA_theorique = res_NADIR/np.cos(theta)**2  # équation qui ne 
         # prend pas en compte la courbure de la Terre
     
-        if g_ND:
-            plt.plot(THETA, ND, label=r"altitude h={0} km".format(altitudes[h]))
-            clr = plt.gca().get_children()[2*cc].get_color()
-            #plt.plot(THETA, ND_simple, linestyle='dotted', color=clr, 
-            #label="calcul simple")
-            plt.plot(THETA, ND_simple, linestyle='dotted', color=clr)
-    
-        if g_OD:
-            plt.plot(THETA, OD, label=r"altitude h={0} km".format(altitudes[h]))
-            clr = plt.gca().get_children()[2*cc].get_color()
-            #plt.plot(THETA, OD_simple, linestyle='dotted', color=clr, label=
-            #"calcul simple")
-            plt.plot(THETA, OD_simple, linestyle='dotted', color=clr)
-    
-        if g_reso:
-            if ang==angle[0]:
-                plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(altitudes[h]))
-            else:
-                plt.plot(THETA[:-1], res_THETA)
-            plt.grid()
-            plt.xlabel(r"Angle de $visée$ (deg)")
-            plt.ylabel("distance (km)")
-            plt.title(r"distance capteur-cible (km) en fonction de l'angle de "
-                      "$visée$ (deg)")
-            plt.legend()
-            plt.show()
+        if ang==angle[0]:
+            plt.plot(THETA[:-1], res_THETA, label=r"altitude h={0} km".format(altitudes[h]))
+        else:
+            plt.plot(THETA[:-1], res_THETA)
+        plt.grid()
+        plt.xlabel(r"Angle de $visée$ (deg)")
+        plt.ylabel("distance (km)")
+        plt.title(r"distance capteur-cible (km) en fonction de l'angle de "
+                    "$visée$ (deg)")
+        plt.legend()
+        plt.show()
         
         e = 0.01
         i = 0
