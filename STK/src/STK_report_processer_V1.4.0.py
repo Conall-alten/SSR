@@ -60,8 +60,8 @@ folder1 = "target_primary"
 # folder1 = "general_shapes"
 
 # Type de rapport à importer
-folder2 = "FoM_points"
-# folder2 = "region"
+# folder2 = "FoM_points"
+folder2 = "region"
 # folder2 = "access_sensors"
 # folder2 = "access_ground"
 
@@ -81,7 +81,7 @@ elif folder2=="FoM_points": # Loi des RCO
 
 #%% Ici on s'intéresse aux reports "Stats By Region"
 elif folder2=="region":
-    process_region(path, Nsat1, Nplan1, Nsat2, Nplan2, inc1, alt1, IPS1, add1)
+    process_region(path, const1, const2 = None, res = [1.0, 1.2, 1.4, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0])
 
 #%% Bases au sol
 elif folder2 == "access_ground":

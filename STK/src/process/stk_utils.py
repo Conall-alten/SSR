@@ -34,7 +34,6 @@ def moy_non_null(liste):
         new_revisit_times : liste mais sans les éléments nuls.
 
     """
-    print("XX XX XX")
     new_revisit_times = [] # Secondes
     minutes = []
     n = 0

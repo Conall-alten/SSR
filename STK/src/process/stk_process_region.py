@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.process.stk_utils import *
 
-def process_region(path, Nsat1, Nplan1, Nsat2, Nplan2, inc1, alt1, IPS1, add1):
+def process_region(path, const1, const2, res):
 
     res = [2.0, 3.0, 4.0]
     res_list = []
@@ -34,13 +34,13 @@ def process_region(path, Nsat1, Nplan1, Nsat2, Nplan2, inc1, alt1, IPS1, add1):
     for r in res:
         
         res_list.append(r)
-        name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(r)+add1
+        name = const1.name_with_res(r)
         # Traitement du fichier csv
-        N = Nsat1*Nplan1
+        N = const1.nb_sat()
         # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams
         # (changer si KeyError: "Start Time (UTCG)")
         # db est un DataFrame (sorte de tableau)
-        db = pd.read_csv(path + "/" + name1 + ".csv", skiprows=24+N, delimiter=",")
+        db = pd.read_csv(path + "/" + name + ".csv", skiprows=24+N, delimiter=",")
 
         db_sorted = db.sort_values(by=("Region Name"))
         # Les temps de revisite seront stockés dans cette liste
