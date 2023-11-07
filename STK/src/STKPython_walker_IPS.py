@@ -56,7 +56,7 @@ satellite.Propagator.Propagate()
 sensor = satellite.Children.New(20, 'sensor')  # 17 represents STK object type for Sensor
 # IAgSensor sensor: Sensor object
 # Change pattern and set
-sensor.CommonTasks.SetPatternSimpleConic(48,1)
+sensor.CommonTasks.SetPatternSimpleConic(48, 1) #48 = Demi angle fourni par res to angle
 
 walker_constellation = root.ExecuteCommand('Walker  */Satellite/MySatellite  Type  Delta  NumPlanes  12  NumSatsPerPlane  2  InterPlanePhaseIncrement 1 ColorByPlane Yes ConstellationName walker_system SetUniqueNames Yes')
 
