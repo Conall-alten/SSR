@@ -15,7 +15,8 @@ from sklearn.metrics import r2_score
 # les paramètres de la simulation.
 
 
-path_user = os.path.dirname(__file__)+'/../' # Chemin de la base de données
+path_user = r"C:\Users\DECLINE\Desktop\logiciels\python\stk" # Chemin de la base de données
+path_user = r"C:\Users\edecline\Desktop\logiciels\python\stk"
 # Ferme toutes les fenêtres
 plt.close('all')
 
@@ -232,25 +233,21 @@ def doublons_moyenne(liste1, liste2):
 
 const1 = "\RCO" # Type d'orbite (RCO, SSO, CITROUILLE)
 #const1 = "\CITROUILLE"
-#const1 = "\SSO"
-Nsat1 = 2 # Nombre de satellites par plan (~2)
-Nplan1 = 4 # Nombre de plans (~4 - ~12)
-inc1 = "50" # Inclinaison des orbites (47, 51..., couplées 48_50, 47_49_50, ou
-               # 0 si SSO) ou latitude du point focal pour une constellation 
-               # citrouille
-alt1 = 500 # Altitude (150 - 500 km)
-IPS1 = 0
-res1 = 3.0   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
-             # RCO_2x4_50_260_1.5, RCO_2x4_50_260_1, RCO_2x4_50_260_2.5)). Il 
+const1 = "\SSO"
+Nsat1 = 2 # Nombre de satellites par plan
+Nplan1 = 12 # Nombre de plans
+inc1 = "0" # Inclinaison des orbites (0° par convention pour une SSO)
+alt1 = 250 # Altitude (km)
+res1 = 2.0   # Les fichiers apparaissent dans l'ordre alphabétique (ex : 
+             # RCO_2x4_50_260_0_1.5, RCO_2x4_50_260_0_1, RCO_2x4_50_260_0_2.5)). Il 
              # faut donc écrire 1.0, 2.0 ou 3.0 au lieu de 1, 2 et 3 pour avoir
              # 1.0 avant 1.5
+IPS1 = 0
 
-add1 = "_Luhansk" # Informations supplémentaires (cibles ponctuelles ou origine
+# Informations supplémentaires (cibles ponctuelles ou origine
                  # des satellites notamment)
-add1 = "_KSZ"
 add1 = "_FromFrance"
 add1 = ""
-#add1 = "_ChainBaseObject"
 
 # Paramètres de la constellation 2
 
@@ -261,8 +258,8 @@ Nplan2 = 15 # Nombre de plans
 inc2 = "50" # Inclinaison des orbites
 inc2 = "90"
 alt2 = 300 # Altitude (150 - 500 km)
-IPS2 = 0
 res2 = 1.6
+IPS2 = 0
 add2 = ""
 # Nom du fichier csv enregistré depuis STK
 # Privilégier le format orbite_satxplan_inclinaison_altitude_resolution pour 
@@ -279,7 +276,7 @@ name = name1 + name2
 
 # Type de cible considérée
 folder1 = "\\target_primary"
-#folder1 = "\\global"
+folder1 = "\\global"
 #folder1 = "\\files_points"
 #folder1 = "\\target_secondary"
 #folder1 = "\\general_shapes"
@@ -339,23 +336,31 @@ if folder2=="\\access_sensors":
             # colonne du tableau
         if len(db_sorted.iloc[0, 1])>1:
             try:
-                revisit_times[i] = pd.to_datetime(
+                if abs(pd.to_datetime(
                     db_sorted.iloc[i+1, 1]).timestamp()-pd.to_datetime(
-                        db_sorted.iloc[i, 2]).timestamp()
+                        db_sorted.iloc[i, 2]).timestamp())<20000:
+                    revisit_times[i] = pd.to_datetime(
+                        db_sorted.iloc[i+1, 1]).timestamp()-pd.to_datetime(
+                            db_sorted.iloc[i, 2]).timestamp()
             except:
                  
                 # Le break est essentiel car à la fin du tableau, la fonction 
                 # to_datetime n'a plus de sens
                 break
+            
+            
         else: # Un fichier Chain contient une colonne de plus contenant des 
               # indices, il faut donc augmenter les indices de 1. On
               # différencie un rapport chain d'un rapport access "manuel" en 
               # comptant la longueur de la 2e colonne (si 1, on a un indice,
               # sinon on a une date du type 1 Aug 2023 10:15:31.325)
             try:
-                revisit_times[i] = pd.to_datetime(
+                if abs(pd.to_datetime(
                     db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
-                        db_sorted.iloc[i, 3]).timestamp()
+                        db_sorted.iloc[i, 3]).timestamp())<20000:
+                    revisit_times[i] = pd.to_datetime(
+                        db_sorted.iloc[i+1, 2]).timestamp()-pd.to_datetime(
+                            db_sorted.iloc[i, 3]).timestamp()
             except:
                 
                 # Le break est essentiel car à la fin du tableau, la fonction 
@@ -369,7 +374,7 @@ if folder2=="\\access_sensors":
     plt.minorticks_on()    
     plt.grid(True, which="major", color="k", linestyle="-")
     plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
-    plt.title("Revisit time, 1 week, avg = "+minsec(avg))
+    plt.title("Revisit time, avg = "+minsec(avg))
     plt.xlabel("Number of revisits")
     plt.ylabel("Revisit time (min)")
     plt.scatter(np.linspace(0, len(revisit_times_non_null), len(revisit_times_non_null)),
@@ -430,6 +435,7 @@ if folder2=="\\access_sensors":
 # de coordonnées (lat, long)
 
 elif folder2=="\\FoM_points": # Loi des RCO
+    
     if name2=="":
         Nsat2=0
         Nplan2=0
@@ -442,7 +448,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
     long = []
     for i in range(0, len(db)):
         try:
-            if db.iloc[i, 2]<200000:
+            if db.iloc[i, 2]<20000:
                 revisit_times.append(db.iloc[i, 2]) # 3e colonne : revisite
                 lat.append(db.iloc[i, 0])
                 long.append(db.iloc[i, 1])
@@ -451,7 +457,7 @@ elif folder2=="\\FoM_points": # Loi des RCO
             break
     
     avg, minutes, revisit_times_non_null = moy_non_null(revisit_times)
-    lat_reduite, revisit_times_moy = doublons_moyenne(lat, revisit_times)
+    lat_reduite, revisit_times_moy = doublons_moyenne(lat, revisit_times_non_null)
     # On trouve les indices du max et du min
     ind_max = indice_max(revisit_times_non_null)
     ind_min = indice_min(revisit_times_non_null)
@@ -538,18 +544,23 @@ elif folder2=="\\FoM_points": # Loi des RCO
     # pour alt = 100, 180, 260, 300, 500 et 800.
     # Sauvegarder les profils rev=f(lat).
     
+    
+    
+    ############################# Résolution #################################
+    
     try:
-        alt = [100, 180, 260, 300, 500]
-        deg = 4
+        #alt = [100, 180, 260, 300, 400, 500, 800]
+        deg = 5
         M = np.zeros((len(alt), deg+1))
         #alt = [100]
         # Résolution au nadir (compose le nom de fichiers existants)
         #res = [0.85, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
-        res1 = [1.0, 2.0, 3.0]
-        res2 = [3.0, 4.0, 5.0]
-        res = [res1, res2]
+        res1 = [0.85, 1.0, 1.5, 2.0]
+        res2 = [2.5, 3.0, 3.5, 4.0, 5.0, 6.0]
+        res3 = [6.0, 8.0, 10.0]
+        res = [res1, res2, res3]
         colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink'] # Une couleur par altitude
-        fig3 = plt.figure()
+        fig3 = plt.figure(dpi=200)
         c = -1
         for a in alt:
             c+=1
@@ -607,31 +618,33 @@ elif folder2=="\\FoM_points": # Loi des RCO
                             mini = revisit_times_non_null[i]
                             indice_min = i
                             
-                    lat_diff_min.append(abs(int(inc1)-lat[indice_min]))
-                    lat_diff_max.append(abs(int(inc1)-lat[indice_max]))
+                    lat_diff_min.append(abs(float(inc1)-lat[indice_min]))
+                    lat_diff_max.append(abs(float(inc1)-lat[indice_max]))
                     print(inc1)
                     print(lat[indice_max])
-                    print(abs(int(inc1)-lat[indice_max]))
+                    print(abs(float(inc1)-lat[indice_max]))
                     
                     
                     mymodel = np.poly1d(np.polyfit(res_list, lat_diff_min, deg))
                     myline = np.linspace(res_list[0], res_list[-1], 100)
-                    for m in range(len(mymodel)+1):
-        
-                        print("coeff",str(m),"=", mymodel[m], ", cc2 =", c)
-                        M[c][m]=mymodel[m]
-                        print("r2",r2_score(lat_diff_min, mymodel(res_list)))
-                    plt.plot(myline, mymodel(myline), linestyle=':')
+                # On est sorti de l'indentation sinon l'interpolation
+                # sera à chaque fois refaite à partir du premier point.
+            for m in range(len(mymodel)+1):
+
+                print("coeff",str(m),"=", mymodel[m], ", cc2 =", c)
+                M[c][m]=mymodel[m]
+                print("r2",r2_score(lat_diff_min, mymodel(res_list)))
+            #plt.plot(myline, mymodel(myline), linestyle=':', c=colors[c])
                 
             # Changer le nom des fichiers cible (la liste res) et l'altitude    
             
-            plt.plot(res_list, lat_diff_min, marker="o", 
-                      label="Inc - best at "+str(a)+"km", c=colors[c])
-            # plt.plot(res_list, lat_diff_max, marker="o", 
-            #           label="Inc - worst at "+str(a)+"km", c=colors[c], 
-            #           linestyle=':')
+#            plt.plot(res_list, lat_diff_min, marker="o", 
+#                      label="Inc - best at "+str(a)+"km", c=colors[c])
+            plt.plot(res_list, lat_diff_max, marker="o", 
+                       label="Inc - worst at "+str(a)+"km", c=colors[c], 
+                       linestyle='--')
             plt.title("Difference in latitude at "+str(inc1)+"°")
-            plt.xlabel("Resolution")
+            plt.xlabel("Resolution (m)")
             plt.ylabel("Latitude (deg)")
             # plt.xlim(0)
         plt.legend()
@@ -648,6 +661,67 @@ elif folder2=="\\FoM_points": # Loi des RCO
     except:
         print("Pas d'autres fichiers similaires")
     
+    
+    ################################ IPS #####################################
+    
+    try:
+        
+        const1 = "\SSO"
+        Nsat1 = 2 # Nombre de satellites par plan
+        Nplan1 = 12 # Nombre de plans
+        inc1 = "0" # Inclinaison des orbites (0° par convention pour une SSO)
+        alt1 = 250 # Altitude (km)
+        res1 = 2.0
+    
+        IPS = [i for i in range(Nplan1)] # IPS (compose le nom de fichiers existants)
+    
+        colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'c', 'gold', 'yellowgreen', 'navy', 'darkturquoise'] # Une couleur par IPS
+        fig3 = plt.figure(dpi=200)
+        c = -1
+        ips_list = []
+        for ips in IPS:
+            c+=1
+            ips_list.append(ips)
+            name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(ips)+"_"+str(res1)+add1
+            name = name1+name2
+            print(name)
+            if name2=="":
+                Nsat2 = 0
+                Nplan2 = 0
+            N = Nsat1*Nplan1+Nsat2*Nplan2
+            
+            db = pd.read_csv(path+folder3+name+".csv", 
+                              skiprows=25+N, delimiter=",") # 25 correspond au
+            # format du rapport STK
+            revisit_times = np.zeros(len(db))
+            lat = np.zeros(len(db))
+            long = np.zeros(len(db))
+            for i in range(0, len(db)):
+                try:
+                    revisit_times[i] = db.iloc[i, 2]
+                    lat[i] = db.iloc[i, 0]
+                    long[i] = db.iloc[i, 1]
+                except:
+                    break
+    
+            avg, minutes, new_revisit_times = moy_non_null(revisit_times)                
+        
+            plt.plot(ips_list[ips], avg, marker="o", 
+                       label="IPS="+str(ips), c=colors[c], 
+                       linestyle='--')
+        plt.title("Revisite en fonction de l'IPS à "+str(Nplan1)+" plans")
+        plt.xlabel("IPS")
+        plt.ylabel("Revisite (min)")
+        # plt.xlim(0)
+        plt.legend()
+        plt.minorticks_on()
+        plt.grid(True, which="major", color="k", linestyle="-")
+        plt.grid(True, which="minor", color="grey", linestyle="-", alpha=0.2)
+        fig3.savefig(path+"\IPS\\"+const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_ips_"+str(res1)+add1+".png", 
+                          dpi=300, pad_inches=0)
+    except:
+        print("Pas d'autres fichiers similaires")
+
 #%% Ici on s'intéresse aux reports "Stats By Region"
 
 elif folder2=="\\region":
@@ -660,10 +734,7 @@ elif folder2=="\\region":
         res_list.append(r)
         name1 = const1+"_"+str(Nsat1)+"x"+str(Nplan1)+"_"+str(inc1)+"_"+str(alt1)+"_"+str(IPS1)+"_"+str(r)+add1
         # Traitement du fichier csv
-        if name2=="":
-            Nsat2=0
-            Nplan2=0
-        N = Nsat1*Nplan1+Nsat2*Nplan2
+        N = Nsat1*Nplan1
         # Le délimiteur peut être , ou ; si le fichier csv a transité sur Teams
         # (changer si KeyError: "Start Time (UTCG)")
         # db est un DataFrame (sorte de tableau)

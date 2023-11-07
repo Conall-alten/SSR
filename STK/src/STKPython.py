@@ -9,8 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import win32com.client
-from comtypes.client import CreateObject
-from comtypes.client import GetActiveObject
 import pandas as pd
 
 plt.close("all")
@@ -18,14 +16,8 @@ plt.close("all")
 uiApplication = win32com.client.Dispatch('STK11.Application')
 uiApplication.Visible = True
 
-# Start new instance of STK
-uiApplication = CreateObject('STK11.Application')
-uiApplication.Visible = True
-
 # Get our IAgStkObjectRoot interface
 root = uiApplication.Personality2
-uiApplication = win32com.client.GetActiveObject('STK11.Application')
-uiApplication.Visible = True
 
 #Creating the Scenario
 num_days=7; # <28 j

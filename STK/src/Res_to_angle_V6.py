@@ -12,15 +12,14 @@ plt.close("all")
 
 # Paramètres initiaux
 
-res_NADIR = 0.825 # Résolution au sol de la caméra (exemple 1 mètre = cahier
-                  # des charges SSR)
-
+res_NADIR = 0.825 # Résolution au sol de la caméra à 250 km
+#res_NADIR = 1 # Résolution au sol de la caméra à 250 km
 altitudes = [100, 180, 200, 220, 240, 250, 260, 300, 500, 800] # altitude
 altitudes = np.linspace(100, 500, 10)
-altitudes = [100]
+altitudes = [500]
 # Une couleur par altitude (plots)
 # colors = ['b', 'r', 'g', 'k', 'orange', 'm', 'pink', 'grey', 'gold', 'cyan'] 
-    
+
 # Résolution off-nadir désirée 
 
 res_sol1 = np.linspace(0.9, 1.6, 6)
@@ -28,7 +27,7 @@ res_sol2 = np.linspace(1.6, 5, 5)
 res_sol3 = np.linspace(5, 10, 3)
 res_sol_tot = [res_sol1, res_sol2, res_sol3]
 
-res_sol1 = [6.189]
+res_sol1 = [6]
 res_sol_tot = [res_sol1]
 
 R = 6378         # Rayon de la Terre (km)
@@ -70,7 +69,7 @@ def get_coeff(deg, res_sol_tot, altitudes, ang_list, h):
 
 # Pour chaque résolution, on fait varier l'altitude
 
-for rt in range(len(res_sol_tot)):
+for rtot in range(len(res_sol_tot)):
     for h in range(N):
         res_list = []
         ang_list = []
@@ -94,7 +93,6 @@ for rt in range(len(res_sol_tot)):
         c = altitudes[h]*(altitudes[h]+2*R)
         delta = b**2-4*a*c
     
-        xDp = (-b+np.sqrt(delta))/(2*a) # Racine du polynôme à rejeter
         xDm = (-b-np.sqrt(delta))/(2*a)
     
         xD = xDm                 # Coordonnée x du point au sol D
@@ -103,10 +101,10 @@ for rt in range(len(res_sol_tot)):
         OD = np.sqrt(xD**2+(R+altitudes[h]-yD)**2) # Distance capteur - cible
         ND = np.sqrt((R-yD)**2+xD**2)              # Distance nadir - cible
     
-        res_THETA = (np.diff(xD)**2+np.diff(yD)**2)**0.5 # Résolution au sol
-                                                         # en mètres
+        res_THETA = np.sqrt(np.diff(xD)**2+np.diff(yD)**2) # Résolution au sol
+         # en prenant en compte la courbure de la Terre en mètres
                                                             
-        res_THETA_theorique = res_NADIR/np.cos(theta)**2  # équation qui ne
+        res_THETA_simple = res_NADIR/np.cos(theta)**2  # équation qui ne
         # prend pas en compte la courbure de la Terre
          
         if g_ND:
@@ -125,14 +123,14 @@ for rt in range(len(res_sol_tot)):
             
         elif g_reso:
             plt.figure(1)
-            if rt==0:
+            if rtot==0:
                 plt.plot(THETA[:-1], res_THETA, 
                       label="altitude h={0:9.1f} km".format(altitudes[h]))#,c=colors[h])
                 plt.legend()
             else:
                 plt.plot(THETA[:-1], res_THETA, 
                       label="altitude h={0:9.1f} km".format(altitudes[h]))#c=colors[h])
-            # plt.plot(THETA[:-1], res_THETA_theorique[:-1], 
+            # plt.plot(THETA[:-1], res_THETA_simple[:-1], 
             #       label="Résolution théorique", c=colors[h])
             
             plt.title(
@@ -144,16 +142,25 @@ for rt in range(len(res_sol_tot)):
             
         # Toutes les résolutions par altitude
         
-        for r in res_sol_tot[rt]:  
+        for r in res_sol_tot[rtot]:  
             res_list.append(r)
             e = 0.001
             i = 0
             while r-res_THETA[i]>e:
-                i = i+1
-            ang_list.append((THETA[i-1]+THETA[i])/2)
-        
+                i = i+1 # Lorsque cette différence devient négative, elle est 
+                # de fait plus petite que e > 0, donc la boucle s'arrête.
+                # On pourrait prendre la valeur de res_THETA pour laquelle
+                # la différence est la plus plus proche de 0, mais puisque
+                # l'une est positive et l'autre est négative, on choisit
+                # simplement la moyenne.
+            ang_list.append((round((THETA[i-1]+THETA[i])/2,2)))
+            print("Résolution entre", round(res_THETA[i-1],2), "et", round(res_THETA[i],2),
+      "m pour un angle de", round(THETA[i-1],2), "-",round(THETA[i],2),
+      "degrés, à l'altitude de",altitudes[h], "km")
+            print("Moyenne de", round((res_THETA[i-1]+res_THETA[i])/2,2),"m à",
+      round((THETA[i-1]+THETA[i])/2,2),"°")
         plt.figure(2)
-        if rt==0:
+        if rtot==0:
             mymodel, myline, M = get_coeff(deg, res_sol_tot, altitudes, 
                                             ang_list, h)
             plt.legend() # On affiche la légende une seule fois
@@ -162,11 +169,11 @@ for rt in range(len(res_sol_tot)):
                                             ang_list, h)
         plt.plot(myline, mymodel(myline), linestyle=':')#, c=colors[h])
         
-    plt.figure(2*rt+3)
+    plt.figure(2*rtot+3)
     # print("Déterminant=",np.linalg.det(M))
     # Coefficient des polynômes pour chaque degré en fonction de l'altitude
     plt.plot(M, altitudes)
-    plt.title(str(res_sol_tot[rt][0])+" m to "+str(res_sol_tot[rt][-1])+" m")
+    plt.title(str(res_sol_tot[rtot][0])+" m to "+str(res_sol_tot[rtot][-1])+" m")
     plt.xlabel("Coefficients")
     plt.ylabel("Altitude (km)")
     
@@ -179,7 +186,7 @@ for rt in range(len(res_sol_tot)):
     plt.legend()
     plt.show()
     
-    plt.figure(2*(rt+2)) # La prochaine figure après la liste des res
+    plt.figure(2*(rtot+2)) # La prochaine figure après la liste des res
     prop = [] # Coefficient de proportionalité k
     for i in range(np.shape(M)[0]): # Pour toutes les lignes
         l = []
@@ -191,15 +198,10 @@ for rt in range(len(res_sol_tot)):
     for i in range(len(prop)):
         plt.plot([i for i in range(deg+1)], prop[i], label="h ="+str(
             round(altitudes[i],1))+" km")
-        plt.title(str(res_sol_tot[rt][0])+" m to "+str(
-            res_sol_tot[rt][-1])+" m")
+        plt.title(str(res_sol_tot[rtot][0])+" m to "+str(
+            res_sol_tot[rtot][-1])+" m")
         plt.xlabel('Puissance de x')
         plt.ylabel('k = $C/x^n$')
         plt.legend()
         
 print("Résultat en degrés :",ang_list)
-print("Résolution entre", res_THETA[i-1], "et", res_THETA[i],
-      "m pour un angle de", THETA[i-1], "-",THETA[i],
-      "degrés, à l'altitude",altitudes[h])
-print("Moyenne de", (res_THETA[i-1]+res_THETA[i])/2,"m à",
-      (THETA[i-1]+THETA[i])/2,"°")
