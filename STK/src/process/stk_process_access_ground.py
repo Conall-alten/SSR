@@ -10,11 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.process.stk_utils import *
 
-def process_access_ground(path, name, folder3):
+def process_access_ground(path, const1, access_type):
 
     # Traitement du fichier csv
 
-    avg, minutes, revisit_times_non_null = doing_thing(path, name, always_take = True)
+    avg, minutes, revisit_times_non_null = doing_thing(path, str(const1), always_take = True)
     
     # Durée de chaque revisite et moyenne
     fig1 = plt.figure()
@@ -37,7 +37,7 @@ def process_access_ground(path, name, folder3):
         
         name = "\\"+str(antenna_type)+"_"+str(d)
         
-        if folder3 == "\\link":
+        if access_type == "link":
                 
             col_names = ["Time (UTCG)", "EIRP (dBW)", "Rcvd. Frequency (GHz)",
                          "Rcvd. Iso. Power (dBW)", "Flux Density (dBW/m^2)", 
@@ -49,7 +49,7 @@ def process_access_ground(path, name, folder3):
             # Le délimiteur peut être , ou ; si le fichier csv a transité sur 
             # Teams (changer si KeyError: "Start Time (UTCG)")
             # db est un DataFrame (sorte de tableau)
-            db = pd.read_csv(path+folder3+name+".csv", 
+            db = pd.read_csv(path + "/" + name + "_" + access_type + ".csv", 
                              delimiter=",", names=col_names)
             db_sorted = db.sort_values(by=("Time (UTCG)"))
             
@@ -94,7 +94,7 @@ def process_access_ground(path, name, folder3):
                 
         #%% Access duration
     
-        elif folder3 == "\\duration":
+        elif access_type == "duration":
 
         
             antenna_type = "parabola"
@@ -108,7 +108,7 @@ def process_access_ground(path, name, folder3):
                 # Le délimiteur peut être , ou ; si le fichier csv a transité 
                 # sur Teams (changer si KeyError: "...")
                 # db est un DataFrame (sorte de tableau)
-                db = pd.read_csv(path+folder3+name+".csv", delimiter=",")
+                db = pd.read_csv(path+access_type+name+".csv", delimiter=",")
                 duration = np.zeros(len(db))
                 minutes = np.zeros(len(db))
                 index = np.arange(0, len(db))

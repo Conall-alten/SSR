@@ -14,7 +14,7 @@ def process_access_sensors(path, const1, const2, res):
 
     name = str(const1)
     if const2 :
-        name = name + "_" + str(const2)
+        name = name + "+" + str(const2)
 
     # Résolution au nadir (compose le nom de fichiers existants)
     
@@ -24,7 +24,7 @@ def process_access_sensors(path, const1, const2, res):
         
         name_res = const1.name_with_res(r)
         if const2 :
-            name_res = name_res + "_" + const2.name_with_res(r)
+            name_res = name_res + "+" + const2.name_with_res(r)
         print(name_res)
         
         # Le délimiteur peut être , ou ; (changer si KeyError: "Start Time 

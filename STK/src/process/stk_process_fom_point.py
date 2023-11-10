@@ -31,7 +31,7 @@ def process_fom_point(path, const1, const2):
     
     name = str(const1)
     if const2 :
-        name = name + "_" + str(const2)
+        name = name + "+" + str(const2)
     
     N = const1.nb_sat()
     if const2 :
