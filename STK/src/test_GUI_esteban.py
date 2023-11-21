@@ -82,10 +82,10 @@ class Interface:
             try:
                 open(self.path+self.folder1+self.folder2+self.name+".csv")
             except FileNotFoundError:
-                self.TextVERIF2bis.config(text="Inexistant  ಠ╭╮ಠ")
+                self.TextVERIF2bis.config(text="Inexistant")
                 self.BoutonRun.grid_forget()
             else:
-                self.TextVERIF2bis.config(text="Existe! ( ͡° ͜ʖ ͡°)")
+                self.TextVERIF2bis.config(text="Existe!")
                 self.BoutonRun.grid(row=10,column=0,columnspan=2)
                 
         def combo_bind(event):
@@ -264,7 +264,7 @@ class Interface:
         self.COMB_f2.current(0)
         self.COMB_f2.bind('<<ComboboxSelected>>',combo_bind)
 
-        self.BoutonRun = ttk.Button(self.window,text="o(≧∀≦)o LANCEZ LES SCHEMAS !!! ^_~",command=self.window.destroy,width=35)
+        self.BoutonRun = ttk.Button(self.window,text="Run!",command=self.window.destroy,width=35)
         #self.BoutonRun.grid(row=10,column=0,columnspan=2)
 
         #verif()
