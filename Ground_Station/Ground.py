@@ -30,7 +30,7 @@ def interface_graph():
     # window parameter
     fenetre = tk.Tk()
     fenetre.title("Find A title")
-    fenetre.geometry("780x180")
+    fenetre.geometry("600x180")
 
     # texts
     tk.Label(fenetre, text="Simulation Parameters", relief='sunken', bg='orange').grid(row=0, column=1)
@@ -49,10 +49,6 @@ def interface_graph():
     tk.Label(fenetre, text="Argument du périgé").grid(row=5, column=2)
     tk.Label(fenetre, text="Anomalie moyenne").grid(row=6, column=2)
     tk.Label(fenetre, text="Altitude (en km)").grid(row=7, column=2)
-    
-    tk.Label(fenetre, text="GS Parameters", relief='sunken', bg='red').grid(row=0, column=5)
-    tk.Label(fenetre, text="Latitude").grid(row=2, column=4)
-    tk.Label(fenetre, text="Longitude").grid(row=3, column=4)
 
     # parameters saving
     s1 = tk.IntVar(value=2023)        # annee
@@ -69,9 +65,6 @@ def interface_graph():
     s11 = tk.DoubleVar(value=25.589)  # argument du périgée
     s12 = tk.DoubleVar(value=10.5)  # anomalie moyenne
     s13 = tk.DoubleVar(value=250.0)   # altitude
-    
-    s14 = tk.DoubleVar(value=75)    # lat GS
-    s15 = tk.DoubleVar(value=-49)    # lon GS
 
     # parameters windows
     e1 = tk.Entry(textvariable=s1, justify='center')
@@ -87,8 +80,6 @@ def interface_graph():
     e11 = tk.Entry(textvariable=s11, justify='center')
     e12 = tk.Entry(textvariable=s12, justify='center')
     e13 = tk.Entry(textvariable=s13, justify='center')
-    e14 = tk.Entry(textvariable=s14, justify='center')
-    e15 = tk.Entry(textvariable=s15, justify='center')
     
     # parameters position
     e1.grid(row=2, column=1)
@@ -105,9 +96,6 @@ def interface_graph():
     e11.grid(row=5, column=3)
     e12.grid(row=6, column=3)
     e13.grid(row=7, column=3)
-    
-    e14.grid(row=2, column=5)
-    e15.grid(row=3, column=5)
 
     # quit button
     btn = tk.Button(fenetre, text ="Okay", relief='sunken', bg='lightblue', command = fenetre.destroy)
@@ -116,9 +104,27 @@ def interface_graph():
     # run the app
     fenetre.mainloop()
     
-    return s1.get(), s2.get(), s3.get(), s4.get(), s5.get(), s6.get(), s7.get(), s8.get(), s9.get(), s10.get(), s11.get(), s12.get(), s13.get(), s14.get(), s15.get()
+    return s1.get(), s2.get(), s3.get(), s4.get(), s5.get(), s6.get(), s7.get(), s8.get(), s9.get(), s10.get(), s11.get(), s12.get(), s13.get()
 
 
+def liste_GS():
+    all_GS = {'Toulouse': (43.428889,1.497778), 'Papeete': (-17.511,-149.435), 'IleAmsterdam': (-37.493,77.337), 'Noumea': (-22.2758,166.458), 'Kiev': (50.45, 30.523611), 'Kourou': (5.25144, -52.8047), 'Redu': (50.001889, 5.146656), 'SantaMaria': (36.99725, -25.135722), 'Kiruna': (67.857128, 20.964325), 'Rapa': (-27.583333, -144.333333)}
+    return all_GS
+
+
+def array_gs(all_gs):
+    array_gs = np.array([*all_gs.values()])
+    lat_gs = []
+    lon_gs = []
+    for i in range(len(array_gs)):
+        lat_gs.append(array_gs[i][0])
+        lon_gs.append(array_gs[i][1])
+    lat_gs = np.array(lat_gs)
+    lon_gs = np.array(lon_gs)
+    
+    return lat_gs, lon_gs
+    
+    
 def create_epoch(annee, mois, jour, heure, minute, lenght, step):
     """Fonction permettant la création d'une date et de la conertir au format
     compatible pour la TLE
@@ -187,7 +193,7 @@ def size_seen(h):
     lam = np.arccos(Re/(Re+h))
     return lam*180/np.pi
 
- 
+
 def is_seen(SSP, lat_gr, lon_gr, hori=10):
     """
     Cette fonction renvoie une liste contenant les moments ou la station au 
@@ -320,45 +326,59 @@ def antenna_rotation(liste, pas):
         speed_rotation(azimuth, hauteur, indice_s)
         
  
-def plot_ground_track(SSP, lat_gs, lon_gs):
+def plot_ground_track(SSP, all_gs):
     """Trace la position du satellite sur Terre ainsi que la station sol"""
-    lat = SSP[0]
-    lon = SSP[1]
 
+    lat_gs, lon_gs = array_gs(all_gs)
     
     fig, ax = plt.subplots()
     img = image.imread('planisphere-4000.jpg')  #x=4000, y=2000 pixels
     
-    new_lat = (-100/9)*lat + 1000
-    new_lon = (200/18)*lon + 2000
+    new_lat = (-100/9)*SSP[0] + 1000
+    new_lon = (200/18)*SSP[1] + 2000
     new_lat_gs = (-100/9)*lat_gs + 1000
     new_lon_gs = (200/18)*lon_gs + 2000
     
     ax.scatter(new_lon, new_lat, marker='.', color='orange')
-    ax.plot(new_lon_gs, new_lat_gs, marker='*', color='red')
+    ax.plot(new_lon_gs, new_lat_gs, marker='*', color='red', linestyle='None')
     plt.imshow(img)
     plt.show()
     
-    
+
+def find_cle(dic, valeur_recherchee):
+    for cle, valeur in dic.items():
+        if valeur == valeur_recherchee:
+            cle_trouvee = cle
+            return cle_trouvee
+   
+ 
 def main():
-    a, b, c, d, e, f, g, h, i, j, k, l, m, lat_ground_station, lon_ground_station = interface_graph()
+    a, b, c, d, e, f, g, h, i, j, k, l, m = interface_graph()
+    all_gs = liste_GS()
     times, epoch = create_epoch(a, b, c, d, e, f, g)
     
     tle_1 = "1 00001U 98067A   " + epoch + "  .00021906  00000+0  28403-3 0  8652" 
     tle_2 = "2 00001 " + create_orbit(h, i, j, k, l, m)
 
     SSP = ground_track(tle_1, tle_2, times)
-    plot_ground_track(SSP, lat_ground_station, lon_ground_station)
-    moments = is_seen(SSP, lat_ground_station, lon_ground_station)
-
-    if moments==[]:
-        print("La station au sol n'est jamais visible")
-        return 1
-    else :
-        sub_listes = decouper_liste_en_sous_listes(moments)
-        dt = time_seen(sub_listes, times.tt_strftime())
-        antenna_rotation(sub_listes, g)
-        return 0
+    plot_ground_track(SSP, all_gs)
+    
+    lats_ground_stations, lons_ground_stations = array_gs(all_gs)
+    for k in range(len(lats_ground_stations)):
+        name_gs = find_cle(all_gs, (lats_ground_stations[k], lons_ground_stations[k]))
+        moments = is_seen(SSP, lats_ground_stations[k], lons_ground_stations[k])
+        
+        if moments==[]:
+            print("La station", name_gs, "n'est jamais visible \n")
+            
+        else :
+            print('**********************************************************\n')
+            print("Concernant la station", name_gs, ":")
+            sub_listes = decouper_liste_en_sous_listes(moments)
+            dt = time_seen(sub_listes, times.tt_strftime())
+            antenna_rotation(sub_listes, g)
+            print('\n\n*********************************************************\n')
+            
 
 
 if __name__ == "__main__":
