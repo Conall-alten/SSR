@@ -106,7 +106,7 @@ sensor.CommonTasks.SetPatternSimpleConic(30,0.17453293);
 #
 location = root.CurrentScenario.Children.New('eAreaTarget', 'Ukraine'); #standart input to create a location of interest
 location.AreaTypeData.RemoveAll;
-boundary_S11=pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk\shapes\S11.txt")
+boundary_S11=pd.read_csv("../input/general_shapes/S11.txt")
 boundary_Ukraine = [47.991746,22.851563
 ,48.114737,23.170166
 ,47.967839,23.466797
@@ -1766,7 +1766,7 @@ satellite8.Propagator.Propagate();
  
 #%% NORAD
 
-France=pd.read_csv(r"C:\Users\DECLINE\Desktop\logiciels\python\stk\sat_France.csv")
+France=pd.read_csv("../input/satellite/sat_France.csv")
 # IAgSatellite satellite: Satellite object
 for i in range(len(France)):
     satellite = root.CurrentScenario.Children.New(18, 'MySatellite') # eSatellite
