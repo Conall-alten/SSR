@@ -12,8 +12,7 @@ débit de communication raisonnable.
 Amélioration :
     fonction Changement de repère (geocentrique en terrestre local GS)
     Plot Ground track plus précis
-    plusieurs couleurs constellation
-    sorties dans un fichier propre
+    path fichier dans GUI
 """
 
 import numpy as np
@@ -57,7 +56,7 @@ def interface_graph():
     s3 = tk.IntVar(value=7)           # jour
     s4 = tk.IntVar(value=12)          # heure
     s5 = tk.IntVar(value=00)          # minute
-    s6 = tk.IntVar(value=90)         # durée
+    s6 = tk.IntVar(value=180)         # durée
     s7 = tk.DoubleVar(value=0.1)     # pas 
       
     s8 = tk.DoubleVar(value=50)     # inclinaison
@@ -285,16 +284,14 @@ def decouper_liste_en_sous_listes(liste):
     return sous_listes
 
 
-def time_seen(liste, dates):
+def time_seen(group, dates):
     """Fonction qui calcule la durée de visibilité du satellite et précise 
     entre quelles dates"""
-    delta_t = []
-    for group in liste:
-        print("La station est visible entre", dates[group[0][0]], "et",  dates[group[-1][0]])
-        dt = datetime.strptime(dates[group[-1][0]], "%Y-%m-%d %H:%M:%S TT")-datetime.strptime(dates[group[0][0]], "%Y-%m-%d %H:%M:%S TT")
-        print("Soit pendant :", dt.seconds, "s")
-        delta_t.append(dt)
-    return delta_t
+    print("La station est visible entre", dates[group[0][0]], "et",  dates[group[-1][0]])
+    dt = datetime.strptime(dates[group[-1][0]], "%Y-%m-%d %H:%M:%S TT")-datetime.strptime(dates[group[0][0]], "%Y-%m-%d %H:%M:%S TT")
+    print("Soit pendant :", dt.seconds, "s")
+    
+    return dates[group[0][0]], dates[group[-1][0]], dt.seconds
  
 
 def speed_rotation(positions1, positions2, temps):
@@ -351,13 +348,15 @@ def plot_ground_track(all_SSP, all_gs):
     
     fig, ax = plt.subplots()
     img = image.imread('planisphere-4000.jpg')  #x=4000, y=2000 pixels
+    couleurs = plt.cm.plasma(np.linspace(0, 1, len(SSP_0)))
     
     new_lat = (-100/9)*SSP_0 + 1000
     new_lon = (200/18)*SSP_1 + 2000
     new_lat_gs = (-100/9)*lat_gs + 1000
     new_lon_gs = (200/18)*lon_gs + 2000
     
-    ax.scatter(new_lon, new_lat, marker='.', color='orange')
+    for i in range(len(SSP_0)):
+        ax.scatter(new_lon[i], new_lat[i], marker='.', color=couleurs[i])
     ax.scatter(new_lon_gs, new_lat_gs, marker='*', color='red')
     plt.imshow(img)
     plt.show()
@@ -369,14 +368,22 @@ def find_cle(dic, valeur_recherchee):
             cle_trouvee = cle
             return cle_trouvee
    
- 
+      
 def main():
+    
     a, b, c, d, e, f, g, h, i, j, k, l, m, n = interface_graph()
+    
+    file_path = "result_inc"+str(h)+"deg_"+str(n)+"sat_"+str(f)+"min_"+str(m)+"km"+".csv"     
+    fichier = open(file_path, "w")
+    fichier.write('N° Sat,Name Station,T Begin,T End, Period (s)' + '\n')
+    
     all_gs = liste_GS()
     all_SSP = []
     times, epoch = create_epoch(a, b, c, d, e, f, g)
     
     for sat_i in range(n):  # n satellites dans la constellation
+        print('*********************************************************\n')
+        print("Satellite n°", (sat_i+1))
     
         tle_1 = "1 00001U 98067A   " + epoch + "  .00021906  00000+0  28403-3 0  8652" 
         tle_2 = "2 00001 " + create_orbit(h, i, j, k, l, m, sat_i, n)
@@ -393,13 +400,16 @@ def main():
                 print("La station", name_gs, "n'est jamais visible \n")
             
             else :
-                print('**********************************************************\n')
                 print("Concernant la station", name_gs, ":")
                 sub_listes = decouper_liste_en_sous_listes(moments)
-                dt = time_seen(sub_listes, times.tt_strftime())
+                for group in sub_listes:
+                    t0, t1, dt = time_seen(group, times.tt_strftime())
+                    fichier.write(str(sat_i+1) +','+ name_gs +','+ t0 +','+ t1 +','+ str(dt) + '\n')
+                    
                 antenna_rotation(sub_listes, g)
-                print('\n\n*********************************************************\n')
+                print('\n\n-------------------------------------------------------------\n')
                 
+    fichier.close()            
     plot_ground_track(all_SSP, all_gs)        
 
 if __name__ == "__main__":
