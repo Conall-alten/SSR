@@ -77,7 +77,7 @@ ppo= 5 # pictures per orbit [#]
 #shpa = val_formater(bb)
 #%%
 POI = alt
-errors, raw_values = val_explorer(POI, 100)
+#errors, raw_values = val_explorer(POI, 100)
 #%%
 alt_variation = raw_values
 #%%
